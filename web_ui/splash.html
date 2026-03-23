@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Digital Goldsmith - Splash</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "surface-container-lowest": "#ffffff",
+          "secondary-container": "#d9c2fe",
+          "surface-container": "#eeeeee",
+          "error-container": "#ffdad6",
+          "surface-container-highest": "#e2e2e2",
+          "secondary-fixed-dim": "#d4bcf8",
+          "on-error": "#ffffff",
+          "tertiary-container": "#a8a8a8",
+          "on-tertiary-fixed": "#1a1c1c",
+          "surface-container-low": "#f3f3f3",
+          "on-primary-container": "#503a00",
+          "background": "#f9f9f9",
+          "surface": "#f9f9f9",
+          "on-primary-fixed-variant": "#5c4300",
+          "on-error-container": "#93000a",
+          "outline": "#817662",
+          "on-primary-fixed": "#261a00",
+          "error": "#ba1a1a",
+          "tertiary": "#5e5e5f",
+          "inverse-on-surface": "#f0f1f1",
+          "tertiary-fixed": "#e3e2e2",
+          "outline-variant": "#d3c5ae",
+          "on-tertiary": "#ffffff",
+          "primary-container": "#d4a017",
+          "on-surface-variant": "#4f4634",
+          "surface-dim": "#dadada",
+          "secondary-fixed": "#ecdcff",
+          "inverse-surface": "#2f3131",
+          "on-secondary-container": "#604d80",
+          "on-surface": "#1a1c1c",
+          "inverse-primary": "#f6be39",
+          "on-tertiary-fixed-variant": "#464747",
+          "surface-variant": "#e2e2e2",
+          "primary": "#795900",
+          "on-secondary": "#ffffff",
+          "secondary": "#685589",
+          "tertiary-fixed-dim": "#c7c6c6",
+          "primary-fixed": "#ffdfa0",
+          "primary-fixed-dim": "#f6be39",
+          "on-secondary-fixed-variant": "#503d70",
+          "surface-bright": "#f9f9f9",
+          "on-tertiary-container": "#3c3d3d",
+          "surface-tint": "#795900",
+          "on-secondary-fixed": "#231041",
+          "on-primary": "#ffffff",
+          "surface-container-high": "#e8e8e8",
+          "on-background": "#1a1c1c"
+        },
+        fontFamily: {
+          "headline": ["Cormorant Garamond", "serif"],
+          "body": ["DM Sans", "sans-serif"],
+          "label": ["Plus Jakarta Sans", "sans-serif"],
+          "mono": ["DM Mono", "monospace"]
+        },
+        borderRadius: {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "2xl": "1rem",
+          "3xl": "1.5rem",
+          "full": "9999px"
+        },
+      },
+    },
+  }
+</script>
+<style>
+  @keyframes drift {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    50%  { opacity: 0.3; }
+    100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes ripple {
+    0%   { transform: scale(0.8); opacity: 0; }
+    50%  { opacity: 0.05; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+  @keyframes entrance {
+    0%   { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes buttonSpring {
+    0%   { transform: scale(0.8) translateY(40px); opacity: 0; }
+    70%  { transform: scale(1.05) translateY(-5px); }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .particle {
+    position: absolute;
+    background-color: #FFD700;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .gold-shimmer {
+    background: linear-gradient(90deg, #C8860A 0%, #F5C842 50%, #C8860A 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s infinite linear;
+  }
+  .gold-shimmer-light {
+    background: linear-gradient(90deg, #F5C842 0%, #FFE599 50%, #F5C842 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 5s infinite linear;
+  }
+  .splash-bg {
+    background: radial-gradient(circle at center, #3D1A7A 0%, #1E0A3C 100%);
+  }
+  .ripple {
+    border: 1px solid #FFD700;
+    animation: ripple 6s infinite ease-out;
+  }
+  body {
+    min-height: max(884px, 100dvh);
+  }
+</style>
+</head>
+<body class="antialiased font-body overflow-hidden">
+
+<!-- SCREEN A1: Splash Screen -->
+<div class="relative h-screen w-full flex flex-col items-center justify-center splash-bg overflow-hidden">
+
+  <!-- Particles -->
+  <div class="absolute inset-0 pointer-events-none">
+    <div class="particle w-1 h-1 left-[10%] top-[90%]" style="animation: drift 12s infinite 1s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[25%] top-[85%]" style="animation: drift 15s infinite 3s;"></div>
+    <div class="particle w-1 h-1 left-[40%] top-[95%]" style="animation: drift 10s infinite 0.5s;"></div>
+    <div class="particle w-0.5 h-0.5 left-[55%] top-[80%]" style="animation: drift 18s infinite 5s;"></div>
+    <div class="particle w-1 h-1 left-[70%] top-[88%]" style="animation: drift 14s infinite 2s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[85%] top-[92%]" style="animation: drift 13s infinite 4s;"></div>
+    <div class="particle w-1 h-1 left-[15%] top-[70%]" style="animation: drift 16s infinite 6s;"></div>
+    <div class="particle w-0.5 h-0.5 left-[30%] top-[75%]" style="animation: drift 20s infinite 1s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[50%] top-[65%]" style="animation: drift 11s infinite 8s;"></div>
+    <div class="particle w-1 h-1 left-[65%] top-[78%]" style="animation: drift 14s infinite 3s;"></div>
+    <div class="particle w-1 h-1 left-[80%] top-[60%]" style="animation: drift 15s infinite 7s;"></div>
+    <div class="particle w-0.5 h-0.5 left-[45%] top-[40%]" style="animation: drift 19s infinite 2s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[12%] top-[50%]" style="animation: drift 13s infinite 9s;"></div>
+    <div class="particle w-1 h-1 left-[88%] top-[45%]" style="animation: drift 17s infinite 4s;"></div>
+    <div class="particle w-0.5 h-0.5 left-[33%] top-[20%]" style="animation: drift 21s infinite 1s;"></div>
+    <div class="particle w-1 h-1 left-[66%] top-[30%]" style="animation: drift 12s infinite 6s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[5%] top-[10%]" style="animation: drift 15s infinite 3s;"></div>
+    <div class="particle w-1 h-1 left-[95%] top-[15%]" style="animation: drift 18s infinite 5s;"></div>
+    <div class="particle w-0.5 h-0.5 left-[22%] top-[35%]" style="animation: drift 14s infinite 0s;"></div>
+    <div class="particle w-1 h-1 left-[77%] top-[55%]" style="animation: drift 16s infinite 8s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[48%] top-[12%]" style="animation: drift 20s infinite 2s;"></div>
+    <div class="particle w-1 h-1 left-[58%] top-[52%]" style="animation: drift 13s infinite 4s;"></div>
+    <div class="particle w-0.5 h-0.5 left-[38%] top-[28%]" style="animation: drift 19s infinite 7s;"></div>
+    <div class="particle w-1 h-1 left-[18%] top-[62%]" style="animation: drift 15s infinite 1s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[82%] top-[22%]" style="animation: drift 12s infinite 6s;"></div>
+    <div class="particle w-1 h-1 left-[2%] top-[82%]" style="animation: drift 17s infinite 3s;"></div>
+    <div class="particle w-0.5 h-0.5 left-[98%] top-[72%]" style="animation: drift 14s infinite 9s;"></div>
+    <div class="particle w-1 h-1 left-[50%] top-[50%]" style="animation: drift 16s infinite 2s;"></div>
+    <div class="particle w-1.5 h-1.5 left-[28%] top-[48%]" style="animation: drift 18s infinite 5s;"></div>
+    <div class="particle w-1 h-1 left-[72%] top-[42%]" style="animation: drift 13s infinite 1s;"></div>
+  </div>
+
+  <!-- Faint Ripple -->
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div class="ripple w-[400px] h-[400px] rounded-full"></div>
+  </div>
+
+  <!-- Logo Section -->
+  <div class="flex flex-col items-center justify-center text-center px-8 z-10"
+       style="animation: entrance 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;">
+    <div class="mb-2">
+      <h1 class="font-headline text-[72px] leading-tight font-bold gold-shimmer tracking-tight">SLG</h1>
+      <h2 class="font-headline text-[44px] leading-none font-semibold gold-shimmer-light -mt-2">GOLDS</h2>
+    </div>
+    <p class="font-body text-[15px] tracking-[1.5px] text-white/65 mt-6 uppercase">
+      Your Gold. Your Future.
+    </p>
+  </div>
+
+  <!-- Button & Footer -->
+  <div class="absolute bottom-[14%] w-full px-8 flex flex-col items-center gap-6"
+       style="animation: buttonSpring 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s forwards; opacity: 0;">
+    <!-- Primary CTA -->
+    <button onclick="window.location.href='customer_selection.html'"
+            class="w-full h-[58px] rounded-[30px] bg-gradient-to-r from-[#C8860A] via-[#F5C842] to-[#C8860A] text-[#1A1A2E] font-body font-semibold text-[17px] shadow-2xl active:scale-95 transition-transform duration-200 flex items-center justify-center gap-2 group">
+      GET STARTED
+      <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+    </button>
+    <!-- Footer Link -->
+    <p class="font-body text-[13px] text-white/50 tracking-wide">
+      Already a member? <a class="underline underline-offset-4 text-white/70 hover:text-white transition-colors" href="#">Sign In</a>
+    </p>
+  </div>
+
+  <!-- Identity Mask -->
+  <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#1E0A3C]/40 via-transparent to-[#1E0A3C]/40"></div>
+</div>
+
+</body>
+</html>

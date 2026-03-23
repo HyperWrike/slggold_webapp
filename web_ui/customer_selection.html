@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SLG Golds - Customer Selection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=DM+Sans:wght@400;500;700&family=DM+Mono&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "secondary-container": "#d9c2fe",
+          "primary-container": "#d4a017",
+          "on-surface-variant": "#4f4634",
+          "on-secondary": "#ffffff",
+          "inverse-primary": "#f6be39",
+          "primary": "#795900",
+          "surface-container-low": "#f3f3f3",
+          "on-tertiary": "#ffffff",
+          "tertiary-container": "#a8a8a8",
+          "surface": "#f9f9f9",
+          "primary-fixed-dim": "#f6be39",
+          "on-background": "#1a1c1c",
+          "secondary": "#685589",
+          "on-secondary-container": "#604d80",
+          "outline-variant": "#d3c5ae",
+          "surface-variant": "#e2e2e2",
+          "error": "#ba1a1a",
+          "surface-container-highest": "#e2e2e2",
+          "tertiary": "#5e5e5f",
+          "on-error": "#ffffff",
+          "on-primary-fixed-variant": "#5c4300",
+          "surface-tint": "#795900",
+          "on-secondary-fixed": "#231041",
+          "surface-dim": "#dadada",
+          "tertiary-fixed": "#e3e2e2",
+          "inverse-surface": "#2f3131",
+          "on-tertiary-container": "#3c3d3d",
+          "on-primary-fixed": "#261a00",
+          "inverse-on-surface": "#f0f1f1",
+          "on-secondary-fixed-variant": "#503d70",
+          "tertiary-fixed-dim": "#c7c6c6",
+          "on-primary": "#ffffff",
+          "on-primary-container": "#503a00",
+          "surface-bright": "#f9f9f9",
+          "on-tertiary-fixed": "#1a1c1c",
+          "on-surface": "#1a1c1c",
+          "on-error-container": "#93000a",
+          "primary-fixed": "#ffdfa0",
+          "surface-container-lowest": "#ffffff",
+          "error-container": "#ffdad6",
+          "background": "#f9f9f9",
+          "surface-container-high": "#e8e8e8",
+          "on-tertiary-fixed-variant": "#464747",
+          "secondary-fixed-dim": "#d4bcf8",
+          "secondary-fixed": "#ecdcff",
+          "outline": "#817662",
+          "surface-container": "#eeeeee"
+        },
+        fontFamily: {
+          "headline": ["Noto Serif"],
+          "body": ["Plus Jakarta Sans"],
+          "label": ["Plus Jakarta Sans"],
+          "serif": ["Cormorant Garamond", "serif"],
+          "sans": ["DM Sans", "sans-serif"],
+          "mono": ["DM Mono", "monospace"]
+        },
+        borderRadius: {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+      },
+    },
+  }
+</script>
+<style>
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    box-shadow: 0 0 20px rgba(245, 200, 66, 0.1);
+  }
+  .gold-gradient-text {
+    background: linear-gradient(135deg, #F5C842 0%, #C8860A 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .gold-button-gradient {
+    background: linear-gradient(135deg, #F5C842 0%, #C8860A 100%);
+  }
+  .heritage-glow {
+    box-shadow: 0 0 40px rgba(245, 200, 66, 0.08);
+  }
+  body {
+    min-height: max(884px, 100dvh);
+  }
+</style>
+</head>
+<body class="bg-[#1E0A3C] min-h-screen flex flex-col font-sans selection:bg-primary-container selection:text-on-primary-container">
+
+<!-- Top Navigation / Header Section -->
+<header class="h-[176px] flex items-start px-6 pt-12 relative z-10">
+  <button aria-label="Go back" onclick="window.history.back()"
+          class="w-12 h-12 flex items-center justify-center text-white active:scale-95 transition-transform">
+    <span class="material-symbols-outlined text-[24px]">arrow_back</span>
+  </button>
+</header>
+
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center px-6 relative z-10 -mt-8">
+
+  <!-- Branding & Intro Header -->
+  <div class="text-center mb-12">
+    <p class="font-sans text-[14px] text-white/60 uppercase tracking-[2px] mb-2">Welcome to</p>
+    <h1 class="font-serif italic text-[42px] leading-tight gold-gradient-text font-semibold mb-4 tracking-tight">SLG Golds</h1>
+    <p class="font-sans text-[15px] text-white/70">How would you like to continue?</p>
+  </div>
+
+  <!-- Selection Cards Cluster -->
+  <div class="w-full max-w-md space-y-5">
+
+    <!-- Card 1: New Customer -->
+    <div class="glass-card rounded-[24px] p-[28px] relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all duration-300">
+      <div class="flex justify-between items-start mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+          <span class="material-symbols-outlined text-[#F5C842]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+        </div>
+        <div class="gold-button-gradient w-10 h-10 rounded-full flex items-center justify-center shadow-lg group-hover:translate-x-1 transition-transform">
+          <span class="material-symbols-outlined text-white text-[20px]">arrow_forward</span>
+        </div>
+      </div>
+      <div>
+        <h2 class="font-sans font-bold text-white text-[18px] tracking-wide mb-1">NEW CUSTOMER</h2>
+        <p class="font-sans text-white/60 text-[14px]">Start your gold savings journey today</p>
+      </div>
+      <!-- Decorative light sweep -->
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+    </div>
+
+    <!-- Card 2: Existing Customer -->
+    <div class="glass-card rounded-[24px] p-[28px] relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all duration-300">
+      <div class="flex justify-between items-start mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+          <span class="material-symbols-outlined text-[#F5C842]" style="font-variation-settings: 'FILL' 1;">lock</span>
+        </div>
+        <div class="gold-button-gradient w-10 h-10 rounded-full flex items-center justify-center shadow-lg group-hover:translate-x-1 transition-transform">
+          <span class="material-symbols-outlined text-white text-[20px]">arrow_forward</span>
+        </div>
+      </div>
+      <div>
+        <h2 class="font-sans font-bold text-white text-[18px] tracking-wide mb-1">EXISTING CUSTOMER</h2>
+        <p class="font-sans text-white/60 text-[14px]">Sign in to your account</p>
+      </div>
+      <!-- Decorative light sweep -->
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+    </div>
+
+  </div>
+
+  <!-- Ambient Background Decoration -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#F5C842] opacity-[0.03] blur-[120px] rounded-full pointer-events-none"></div>
+</main>
+
+<!-- Footer Identity Section -->
+<footer class="py-10 flex flex-col items-center justify-center relative z-10">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="w-8 h-[1px] bg-white/10"></span>
+    <p class="font-sans text-[11px] text-white/30 uppercase tracking-[1.5px]">SLG Golds — Trusted Gold Savings</p>
+    <span class="w-8 h-[1px] bg-white/10"></span>
+  </div>
+</footer>
+
+<!-- Background texture overlay -->
+<div class="fixed inset-0 pointer-events-none opacity-20 mix-blend-soft-light"
+     style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCdbsJp2sKPlxyqgLgeb4nCvlXX_uTPSbvl1EKVMcU9pprMFdFAwyQLmErfYQhXMcN8ammHJex9tKj7doJPT73POM_7UcsBQKjUTm8SOyzxqEvWhc25SbV4xc17hNOlHB184rtkZItDyt8mqEW6Y6RYlR7Sg6UDQ7f7jDM4VxrsWPNZfEDZjiCR54GBEF_Gh-XALqCERhH77-LZjCcBjYZ8oEP0MPYDIOqnHkWbSwWTlqBKc2_TkzMhi6LdvB7Oxv7nEhlIc8pAE9o');"></div>
+
+</body>
+</html>
