@@ -1,45 +1,100 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/core/constants/app_dimensions.dart';
 import 'package:slg_golds/presentation/widgets/pin_pad_widget.dart';
+import 'package:slg_golds/core/services/biometric_service.dart';
 
-class PinEntryScreen extends StatefulWidget {
+class PinEntryScreen extends ConsumerStatefulWidget {
   const PinEntryScreen({super.key});
 
   @override
-  State<PinEntryScreen> createState() => _PinEntryScreenState();
+  ConsumerState<PinEntryScreen> createState() => _PinEntryScreenState();
 }
 
-class _PinEntryScreenState extends State<PinEntryScreen> {
+class _PinEntryScreenState extends ConsumerState<PinEntryScreen> {
   String _pin = '';
-  final int _pinLength = 4; // Will be read from user profile eventually
+  final int _pinLength = 4;
+  bool _isAuthenticating = false;
 
   void _onDigitPressed(String digit) {
-    if (_pin.length < _pinLength) {
+    if (_pin.length < _pinLength && !_isAuthenticating) {
       setState(() {
         _pin += digit;
       });
-      
+
       if (_pin.length == _pinLength) {
-        // Authenticate
         _authenticate();
       }
     }
   }
 
   void _onBackspacePressed() {
-    if (_pin.isNotEmpty) {
+    if (_pin.isNotEmpty && !_isAuthenticating) {
       setState(() {
         _pin = _pin.substring(0, _pin.length - 1);
       });
     }
   }
 
-  void _authenticate() {
-    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Authenticating...')));
-    // Assume success for now
-    context.go('/home');
+  Future<void> _authenticate() async {
+    if (_isAuthenticating) return;
+
+    setState(() => _isAuthenticating = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+
+      if (user == null) {
+        if (mounted) context.go('/auth/login');
+        return;
+      }
+
+      // Check user role from profiles
+      final profile = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      final role = profile?['role'] as String? ?? 'customer';
+
+      if (mounted) {
+        if (role == 'admin' || role == 'manager') {
+          context.go('/admin/dashboard');
+        } else {
+          context.go('/portfolio');
+        }
+      }
+    } catch (e) {
+      // Default to customer portfolio on error
+      if (mounted) context.go('/portfolio');
+    } finally {
+      if (mounted) setState(() => _isAuthenticating = false);
+    }
+  }
+
+  Future<void> _authenticateWithBiometric() async {
+    if (_isAuthenticating) return;
+
+    setState(() => _isAuthenticating = true);
+
+    try {
+      final biometric = BiometricService();
+      final authenticated = await biometric.authenticate();
+
+      if (!authenticated) {
+        if (mounted) setState(() => _isAuthenticating = false);
+        return;
+      }
+
+      await _authenticate();
+    } catch (e) {
+      if (mounted) setState(() => _isAuthenticating = false);
+    }
   }
 
   @override
@@ -50,13 +105,9 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
         child: Column(
           children: [
             const Spacer(),
-            
+
             // Header Content
-            Icon(
-              Icons.lock_outline,
-              size: 48,
-              color: AppColors.goldPrimary,
-            ),
+            Icon(Icons.lock_outline, size: 48, color: AppColors.goldPrimary),
             const SizedBox(height: AppDimensions.p24),
             Text(
               'Enter your PIN',
@@ -64,11 +115,13 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
             ),
             const SizedBox(height: AppDimensions.p8),
             Text(
-              'To access your SLG Golds account',
+              _isAuthenticating
+                  ? 'Verifying...'
+                  : 'To access your SLG Golds account',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: AppDimensions.p48),
-            
+
             // PIN Dots
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -94,7 +147,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
               ),
             ),
             const Spacer(),
-            
+
             // Text action
             TextButton(
               onPressed: () {
@@ -102,22 +155,19 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
               },
               child: Text(
                 'Login with Password instead',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.goldDark,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: AppColors.goldDark),
               ),
             ),
             const SizedBox(height: AppDimensions.p24),
-            
+
             // Numpad
             PinPadWidget(
               onDigitPressed: _onDigitPressed,
               onBackspacePressed: _onBackspacePressed,
-              showBiometric: true, // Will be enabled if biometrics are enrolled
-              onBiometricPressed: () {
-                // Trigger biometric auth
-                context.go('/home');
-              },
+              showBiometric: true,
+              onBiometricPressed: _authenticateWithBiometric,
             ),
             const SizedBox(height: AppDimensions.p48),
           ],

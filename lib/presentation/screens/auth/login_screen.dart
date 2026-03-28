@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/core/constants/app_dimensions.dart';
 import 'package:slg_golds/core/constants/app_strings.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
 import '../../../core/services/biometric_service.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -48,15 +50,24 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _onLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
-      // Simulate network request
-      await Future.delayed(const Duration(seconds: 1));
-      
+
+      final success = await ref
+          .read(authNotifierProvider.notifier)
+          .login(_usernameController.text, _passwordController.text);
+
       if (mounted) {
         setState(() => _isLoading = false);
-        // Navigate to Auth Provider (Main App or PIN setup depending on user state)
-        // For now, jump to PIN Entry
-        context.go('/auth/pin-entry');
+        if (success) {
+          context.go('/auth/pin-entry');
+        } else {
+          final error = ref.read(authNotifierProvider).error;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error ?? 'Login failed. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -82,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: AppDimensions.p24),
-                
+
                 // Header
                 Text(
                   'Welcome Back',
@@ -94,25 +105,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: AppDimensions.p48),
-                
+
                 // Form Fields
                 SlgTextField(
-                  label: 'Username',
-                  hint: 'Enter your username',
+                  label: 'Email or Username',
+                  hint: 'admin@slggolds.com',
                   controller: _usernameController,
-                  validator: (value) => value!.isEmpty ? 'Username is required' : null,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Email or username is required' : null,
                 ),
                 const SizedBox(height: AppDimensions.p24),
-                
+
                 SlgTextField(
                   label: 'Password',
                   hint: 'Enter your password',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  validator: (value) => value!.isEmpty ? 'Password is required' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Password is required' : null,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.textSecondary,
                     ),
                     onPressed: () {
@@ -122,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                 ),
-                
+
                 // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
@@ -139,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: AppDimensions.p32),
-                
+
                 SlgButton(
                   text: 'LOGIN',
                   isLoading: _isLoading,
@@ -150,7 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Center(
                     child: IconButton(
                       iconSize: 48,
-                      icon: const Icon(Icons.fingerprint, color: AppColors.goldPrimary),
+                      icon: const Icon(
+                        Icons.fingerprint,
+                        color: AppColors.goldPrimary,
+                      ),
                       onPressed: () async {
                         final success = await _biometricService.authenticate();
                         if (success && mounted) {
@@ -161,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
                 const SizedBox(height: AppDimensions.p24),
-                
+
                 // Register Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

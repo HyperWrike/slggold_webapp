@@ -11,12 +11,12 @@ class AppTheme {
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.surface,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.goldDark,
-        secondary: AppColors.goldPrimary,
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
         surface: AppColors.surface,
         error: AppColors.error,
-        onPrimary: AppColors.textWhite,
-        onSecondary: AppColors.textPrimary,
+        onPrimary: AppColors.onPrimary,
+        onSecondary: AppColors.textWhite,
         onSurface: AppColors.textPrimary,
         onError: AppColors.textWhite,
       ),
@@ -46,7 +46,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r12),
-          borderSide: const BorderSide(color: AppColors.goldDark, width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r12),
@@ -59,7 +59,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.r16),
           ),
-          textStyle: AppTextStyles.labelLarge.copyWith(color: AppColors.textWhite, letterSpacing: 1.5),
+          textStyle: AppTextStyles.labelLarge.copyWith(
+            color: AppColors.textWhite,
+            letterSpacing: 1.5,
+          ),
         ),
       ),
     );

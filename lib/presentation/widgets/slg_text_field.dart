@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimensions.dart';
 
 class SlgTextField extends StatelessWidget {
   final String label;
@@ -41,9 +40,9 @@ class SlgTextField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4.0, bottom: 6.0),
           child: Text(
             label.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
           ),
         ),
         TextFormField(
@@ -60,6 +59,35 @@ class SlgTextField extends StatelessWidget {
             hintText: hint,
             suffixIcon: suffixIcon,
             prefixIcon: prefixIcon,
+            filled: true,
+            fillColor: AppColors.surfaceContainerLowest,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.surfaceContainerHigh,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.surfaceContainerHigh,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.goldPrimary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
           ),
         ),
       ],

@@ -1,16 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/datasources/auth_remote_datasource.dart';
-import '../../data/repositories/auth_repository_impl.dart';
-import '../../domain/entities/user_entity.dart';
-import '../../domain/usecases/auth/get_current_user_usecase.dart';
-import '../../domain/usecases/auth/login_usecase.dart';
-import '../../domain/usecases/auth/logout_usecase.dart';
-import '../../domain/usecases/auth/register_usecase.dart';
-import '../../domain/usecases/auth/verify_pin_usecase.dart';
+import '../../../data/datasources/auth_remote_datasource.dart';
+import '../../../data/repositories/auth_repository_impl.dart';
+import '../../../domain/entities/user_entity.dart';
+import '../../../domain/usecases/auth/get_current_user_usecase.dart';
+import '../../../domain/usecases/auth/login_usecase.dart';
+import '../../../domain/usecases/auth/logout_usecase.dart';
+import '../../../domain/usecases/auth/register_usecase.dart';
+import '../../../domain/usecases/auth/verify_pin_usecase.dart';
 
 // 1. Core Supabase Instance
-final supabaseProvider = Provider<SupabaseClient>((ref) => Supabase.instance.client);
+final supabaseProvider = Provider<SupabaseClient>(
+  (ref) => Supabase.instance.client,
+);
 
 // 2. Data Sources
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
@@ -48,10 +50,15 @@ class AuthState {
   final UserEntity? user;
   final bool isLoading;
   final String? error;
-  
+
   const AuthState({this.user, this.isLoading = false, this.error});
-  
-  AuthState copyWith({UserEntity? user, bool? isLoading, String? error, bool clearError = false}) {
+
+  AuthState copyWith({
+    UserEntity? user,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+  }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
@@ -81,7 +88,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     final result = await _getCurrentUser();
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
       (user) => state = state.copyWith(isLoading: false, user: user),
     );
   }
@@ -132,7 +140,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       nomineeRelationship: nomineeRelationship,
       pin: pin,
     );
-    
+
     return result.fold(
       (failure) {
         state = state.copyWith(isLoading: false, error: failure.message);
@@ -150,14 +158,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _logout();
     state = const AuthState();
   }
-  
+
   Future<bool> verifyPin(String pin) async {
     final result = await _verifyPin(pin);
     return result.fold((l) => false, (r) => r);
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
+  ref,
+) {
   return AuthNotifier(
     ref.watch(loginUseCaseProvider),
     ref.watch(registerUseCaseProvider),

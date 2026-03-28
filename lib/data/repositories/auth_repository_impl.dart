@@ -11,13 +11,15 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<Either<Failure, UserEntity>> login(String username, String password) async {
+  Future<Either<Failure, UserEntity>> login(
+    String username,
+    String password,
+  ) async {
     try {
-      // Note: we use username as email or we should map it.
-      // If the system literally uses "username", Supabase Auth might need email.
-      // Assuming username@slggolds.com for Supabase if email is required, 
-      // or directly if username is supported.
-      final email = '$username@slggolds.com'; // Fallback mapping for Supabase
+      // If input contains @, use as email directly; otherwise append @slggolds.com
+      final email = username.contains('@')
+          ? username
+          : '$username@slggolds.com';
       final user = await remoteDataSource.loginCustomer(email, password);
       return Right(user);
     } on AuthException catch (e) {
@@ -55,12 +57,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final email = '$username@slggolds.com';
-      
+
       final profileData = {
         'full_name': fullName,
         'username': username,
         'phone': phone,
-        'aadhaar': aadhaar, // Should be encrypted before sending or at rest
+        'aadhaar': aadhaar,
         'dob': dob,
         'gender': gender,
         'father_name': fatherName,
@@ -68,6 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'address': address,
         'nominee_name': nomineeName,
         'nominee_relationship': nomineeRelationship,
+        'created_at': DateTime.now().toIso8601String(),
       };
 
       final user = await remoteDataSource.registerCustomer(

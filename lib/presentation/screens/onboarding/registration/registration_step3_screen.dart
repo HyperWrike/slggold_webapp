@@ -1,23 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/core/constants/app_dimensions.dart';
+import 'package:slg_golds/presentation/providers/registration_provider.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
 
-class RegistrationStep3Screen extends StatefulWidget {
+class RegistrationStep3Screen extends ConsumerStatefulWidget {
   const RegistrationStep3Screen({super.key});
 
   @override
-  State<RegistrationStep3Screen> createState() => _RegistrationStep3ScreenState();
+  ConsumerState<RegistrationStep3Screen> createState() =>
+      _RegistrationStep3ScreenState();
 }
 
-class _RegistrationStep3ScreenState extends State<RegistrationStep3Screen> {
+class _RegistrationStep3ScreenState
+    extends ConsumerState<RegistrationStep3Screen> {
   final _formKey = GlobalKey<FormState>();
   final _nomineeNameController = TextEditingController();
   final _nomineeRelationshipController = TextEditingController();
 
-  final List<String> _relationships = ['Spouse', 'Child', 'Parent', 'Sibling', 'Other'];
+  final List<String> _relationships = [
+    'Spouse',
+    'Child',
+    'Parent',
+    'Sibling',
+    'Other',
+  ];
 
   @override
   void dispose() {
@@ -27,8 +37,15 @@ class _RegistrationStep3ScreenState extends State<RegistrationStep3Screen> {
   }
 
   void _onNext() {
-    if (_formKey.currentState!.validate() && _nomineeRelationshipController.text.isNotEmpty) {
-      context.push('/onboarding/register/step4'); // Route to be defined
+    if (_formKey.currentState!.validate() &&
+        _nomineeRelationshipController.text.isNotEmpty) {
+      ref
+          .read(registrationProvider.notifier)
+          .updateStep3(
+            nomineeName: _nomineeNameController.text,
+            nomineeRelationship: _nomineeRelationshipController.text,
+          );
+      context.push('/onboarding/register/step4');
     } else if (_nomineeRelationshipController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a relationship')),
@@ -54,19 +71,24 @@ class _RegistrationStep3ScreenState extends State<RegistrationStep3Screen> {
               children: [
                 // Step Indicator
                 Row(
-                  children: List.generate(4, (index) => Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: index <= 2 ? AppColors.goldPrimary : AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(2),
+                  children: List.generate(
+                    4,
+                    (index) => Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: index <= 2
+                              ? AppColors.goldPrimary
+                              : AppColors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  )),
+                  ),
                 ),
                 const SizedBox(height: AppDimensions.p32),
-                
+
                 Text(
                   'Secure your legacy',
                   style: Theme.of(context).textTheme.headlineLarge,
@@ -77,15 +99,20 @@ class _RegistrationStep3ScreenState extends State<RegistrationStep3Screen> {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: AppDimensions.p32),
-                
+
                 SlgTextField(
                   label: 'Nominee Full Name',
                   hint: 'Enter nominee name',
                   controller: _nomineeNameController,
-                  validator: (value) => value!.isEmpty ? 'Nominee name is required' : null,
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.goldPrimary,
+                  ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Nominee name is required' : null,
                 ),
                 const SizedBox(height: AppDimensions.p24),
-                
+
                 Text(
                   'RELATIONSHIP',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -93,14 +120,16 @@ class _RegistrationStep3ScreenState extends State<RegistrationStep3Screen> {
                   ),
                 ),
                 const SizedBox(height: AppDimensions.p8),
-                
+
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
-                  children: _relationships.map((rel) => _buildRelationshipChip(rel)).toList(),
+                  children: _relationships
+                      .map((rel) => _buildRelationshipChip(rel))
+                      .toList(),
                 ),
                 const SizedBox(height: AppDimensions.p48),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -113,10 +142,7 @@ class _RegistrationStep3ScreenState extends State<RegistrationStep3Screen> {
                     const SizedBox(width: AppDimensions.p16),
                     Expanded(
                       flex: 2,
-                      child: SlgButton(
-                        text: 'NEXT STEP',
-                        onPressed: _onNext,
-                      ),
+                      child: SlgButton(text: 'NEXT STEP', onPressed: _onNext),
                     ),
                   ],
                 ),
@@ -140,10 +166,14 @@ class _RegistrationStep3ScreenState extends State<RegistrationStep3Screen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.goldPrimary.withAlpha(20) : AppColors.surfaceContainerLowest,
+          color: isSelected
+              ? AppColors.goldPrimary.withAlpha(20)
+              : AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppDimensions.r100),
           border: Border.all(
-            color: isSelected ? AppColors.goldPrimary : AppColors.surfaceContainerHigh,
+            color: isSelected
+                ? AppColors.goldPrimary
+                : AppColors.surfaceContainerHigh,
             width: isSelected ? 2 : 1,
           ),
         ),

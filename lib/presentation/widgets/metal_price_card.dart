@@ -9,6 +9,7 @@ class MetalPriceCard extends StatelessWidget {
   final bool isGold;
   final bool isLoading;
   final String? error;
+  final VoidCallback? onRetry;
 
   const MetalPriceCard({
     super.key,
@@ -17,12 +18,16 @@ class MetalPriceCard extends StatelessWidget {
     required this.isGold,
     this.isLoading = false,
     this.error,
+    this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
-    final formatCurrency = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2);
-    
+    final formatCurrency = NumberFormat.simpleCurrency(
+      locale: 'en_IN',
+      decimalDigits: 2,
+    );
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.p16),
       decoration: BoxDecoration(
@@ -30,7 +35,8 @@ class MetalPriceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimensions.r16),
         boxShadow: [
           BoxShadow(
-            color: (isGold ? AppColors.goldPrimary : AppColors.silver).withAlpha(50),
+            color: (isGold ? AppColors.goldPrimary : AppColors.silver)
+                .withAlpha(50),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -55,10 +61,14 @@ class MetalPriceCard extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           else if (error != null)
-            Text(
-              'Error loading',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.error,
+            GestureDetector(
+              onTap: onRetry,
+              child: Text(
+                error!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.error,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             )
           else
@@ -73,7 +83,8 @@ class MetalPriceCard extends StatelessWidget {
           Text(
             'Live Rate',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: (isGold ? AppColors.goldDark : AppColors.surface).withAlpha(180),
+              color: (isGold ? AppColors.goldDark : AppColors.surface)
+                  .withAlpha(180),
             ),
           ),
         ],

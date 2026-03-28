@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/core/constants/app_dimensions.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
 
-class AdminLoginScreen extends StatefulWidget {
+class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
 
   @override
-  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
+  ConsumerState<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _AdminLoginScreenState extends State<AdminLoginScreen> {
+class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -25,10 +28,178 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     super.dispose();
   }
 
-  void _onLogin() {
-    if (_formKey.currentState!.validate()) {
-      // Authenticate as Admin
-      context.go('/admin/dashboard');
+  Future<void> _onLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user == null) {
+        _showError('Login failed.');
+        return;
+      }
+
+      final userId = response.user!.id;
+
+      // Check profile, create if missing
+      var profile = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (profile == null) {
+        await supabase.from('profiles').upsert({
+          'id': userId,
+          'full_name': 'SLG Admin',
+          'username': email.split('@').first,
+          'role': 'admin',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      } else {
+        final role = profile['role'] as String? ?? '';
+        if (role != 'admin' && role != 'manager') {
+          await supabase
+              .from('profiles')
+              .update({'role': 'admin'})
+              .eq('id', userId);
+        }
+      }
+
+      if (mounted) context.go('/admin/dashboard');
+    } on AuthException catch (e) {
+      _showError(
+        '${e.message}\n\nIf user exists, use the exact password you created it with.',
+      );
+    } catch (e) {
+      _showError('Login failed: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _createAdmin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Enter email and password first');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      final response = await supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
+
+      if (response.user != null) {
+        await supabase.from('profiles').upsert({
+          'id': response.user!.id,
+          'full_name': 'SLG Admin',
+          'username': email.split('@').first,
+          'role': 'admin',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+
+        _showSuccess('Admin created! You can now click LOGIN.');
+      }
+    } on AuthException catch (e) {
+      if (e.message.contains('already') || e.message.contains('registered')) {
+        _showAccountExistsDialog(email);
+      } else {
+        _showError(e.message);
+      }
+    } catch (e) {
+      _showError('Failed: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showAccountExistsDialog(String email) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Account Exists'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('The email "$email" already exists in Supabase Auth.'),
+            const SizedBox(height: 16),
+            const Text(
+              'Fix in Supabase Dashboard:',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '1. Go to Authentication → Users\n'
+              '2. Find the user by email\n'
+              '3. Click ⋮ → "Send recovery email" to reset password\n'
+              '4. OR click ⋮ → "Delete user" then try creating again',
+              style: TextStyle(fontSize: 13, height: 1.6),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'IMPORTANT: If you created the user in Supabase Dashboard, use THAT password to login, not a new one.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
+  void _showSuccess(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFF059669),
+        ),
+      );
     }
   }
 
@@ -49,62 +220,150 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: AppDimensions.p48),
-                
-                Icon(Icons.admin_panel_settings, size: 80, color: AppColors.goldPrimary),
-                const SizedBox(height: AppDimensions.p24),
-                
+                const SizedBox(height: AppDimensions.p32),
+
+                const Icon(
+                  Icons.admin_panel_settings,
+                  size: 80,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(height: AppDimensions.p16),
+
                 Text(
                   'Admin Sign In',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
-                const SizedBox(height: AppDimensions.p48),
-                
-                SlgTextField(
-                  label: 'Admin Email',
-                  hint: 'Enter admin email',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value!.isEmpty ? 'Email is required' : null,
-                ),
-                const SizedBox(height: AppDimensions.p24),
-                
-                SlgTextField(
-                  label: 'Password',
-                  hint: 'Enter your password',
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  validator: (value) => value!.isEmpty ? 'Password is required' : null,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      color: AppColors.textSecondary,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
+                const SizedBox(height: AppDimensions.p8),
+                Text(
+                  'Create an account or login with existing one',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.p48),
-                
-                SlgButton(
-                  text: 'SIGN IN TO ADMIN PORTAL',
-                  onPressed: _onLogin,
-                ),
-                
-                const SizedBox(height: AppDimensions.p24),
-                TextButton(
-                  onPressed: () {
-                    context.go('/auth/login');
+                const SizedBox(height: AppDimensions.p32),
+
+                SlgTextField(
+                  label: 'Email',
+                  hint: 'your-email@example.com',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Email required';
+                    if (!value.contains('@')) return 'Invalid email';
+                    return null;
                   },
-                  child: Text(
-                    'Return to Customer Login',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                ),
+                const SizedBox(height: AppDimensions.p16),
+
+                SlgTextField(
+                  label: 'Password',
+                  hint: 'Enter password',
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Password required' : null,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.textSecondary,
                     ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.p32),
+
+                SlgButton(
+                  text: 'LOGIN',
+                  isLoading: _isLoading,
+                  onPressed: _isLoading ? () {} : _onLogin,
+                ),
+
+                const SizedBox(height: AppDimensions.p16),
+
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+
+                const SizedBox(height: AppDimensions.p16),
+
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _createAdmin,
+                  icon: const Icon(Icons.person_add, size: 18),
+                  label: const Text('CREATE NEW ADMIN'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppDimensions.p24),
+
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryFixed.withAlpha(51),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Instructions:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'NEW ADMIN:\n'
+                        '1. Enter your email & password\n'
+                        '2. Click "CREATE NEW ADMIN"\n'
+                        '3. Then click "LOGIN"\n\n'
+                        'EXISTING ADMIN:\n'
+                        'Just click LOGIN with your password.\n\n'
+                        'If you see "already exists":\n'
+                        '→ Delete the user in Supabase Dashboard\n'
+                        '  (Authentication → Users → ⋮ → Delete)\n'
+                        '→ Then try "CREATE NEW ADMIN" again',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: AppDimensions.p16),
+                TextButton(
+                  onPressed: () => context.go('/auth/login'),
+                  child: const Text(
+                    'Back to Customer Login',
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
               ],

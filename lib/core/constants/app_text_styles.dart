@@ -7,6 +7,7 @@ class AppTextStyles {
   static const String headlineFont = 'Cormorant Garamond';
   static const String bodyFont = 'DM Sans';
   static const String monoFont = 'DM Mono';
+  static const String labelFont = 'Plus Jakarta Sans';
 
   static const TextStyle displayLarge = TextStyle(
     fontFamily: headlineFont,
@@ -79,5 +80,34 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.5,
     color: AppColors.textSecondary,
+  );
+
+  // Mono styles (from HTML design)
+  static const TextStyle monoLarge = TextStyle(
+    fontFamily: monoFont,
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle monoMedium = TextStyle(
+    fontFamily: monoFont,
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle monoSmall = TextStyle(
+    fontFamily: monoFont,
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle monoXSmall = TextStyle(
+    fontFamily: monoFont,
+    fontSize: 8,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
   );
 }

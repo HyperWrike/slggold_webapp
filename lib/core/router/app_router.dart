@@ -1,34 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/screens/dummy_screens.dart';
-import '../../presentation/screens/onboarding/splash_screen.dart' as real_splash;
-import '../../presentation/screens/onboarding/customer_type_screen.dart' as real_customer_type;
+import '../../presentation/screens/onboarding/splash_screen.dart'
+    as real_splash;
+import '../../presentation/screens/onboarding/customer_type_screen.dart'
+    as real_customer_type;
 import '../../presentation/screens/onboarding/registration/registration_step1_screen.dart';
 import '../../presentation/screens/onboarding/registration/registration_step2_screen.dart';
 import '../../presentation/screens/onboarding/registration/registration_step3_screen.dart';
 import '../../presentation/screens/onboarding/registration/registration_step4_screen.dart';
-import '../../presentation/screens/onboarding/registration/registration_success_screen.dart' as real_success;
+import '../../presentation/screens/onboarding/registration/registration_success_screen.dart'
+    as real_success;
 import '../../presentation/screens/auth/login_screen.dart' as real_login;
-import '../../presentation/screens/auth/pin_entry_screen.dart' as real_pin_entry;
+import '../../presentation/screens/auth/pin_entry_screen.dart'
+    as real_pin_entry;
+import '../../presentation/screens/auth/otp_verification_screen.dart';
 import '../../presentation/screens/main/home/home_screen.dart' as real_home;
-import '../../presentation/screens/main/portfolio/portfolio_screen.dart' as real_portfolio;
-import '../../presentation/screens/main/transactions/transaction_screen.dart' as real_transaction;
-import '../../presentation/screens/main/schemes/scheme_enrollment_screen.dart' as real_schemes;
-import '../../presentation/screens/main/schemes/enrollment_flow_screen.dart' as real_enrollment;
-import '../../presentation/screens/main/profile/profile_screen.dart' as real_profile;
-import '../../presentation/screens/admin/admin_login_screen.dart' as real_admin_login;
-import '../../presentation/screens/admin/admin_dashboard_screen.dart' as real_admin_dashboard;
-import '../../presentation/screens/admin/admin_scheme_list_screen.dart' as real_admin_schemes;
-import '../../presentation/screens/admin/admin_create_scheme_screen.dart' as real_admin_create_scheme;
-import '../../presentation/screens/admin/admin_customer_list_screen.dart' as real_admin_customers;
-import '../../presentation/screens/admin/admin_customer_detail_screen.dart' as real_admin_customer_detail;
-import '../../presentation/screens/admin/admin_gst_screen.dart' as real_admin_gst;
-import '../../presentation/screens/admin/admin_reports_screen.dart' as real_admin_reports;
+import '../../presentation/screens/main/portfolio/portfolio_screen.dart'
+    as real_portfolio;
+import '../../presentation/screens/main/transactions/transaction_screen.dart'
+    as real_transaction;
+import '../../presentation/screens/main/schemes/scheme_enrollment_screen.dart'
+    as real_schemes;
+import '../../presentation/screens/main/schemes/enrollment_flow_screen.dart'
+    as real_enrollment;
+import '../../presentation/screens/main/profile/profile_screen.dart'
+    as real_profile;
+import '../../presentation/screens/admin/admin_login_screen.dart'
+    as real_admin_login;
+import '../../presentation/screens/admin/admin_dashboard_screen.dart'
+    as real_admin_dashboard;
+import '../../presentation/screens/admin/admin_scheme_list_screen.dart'
+    as real_admin_schemes;
+import '../../presentation/screens/admin/admin_create_scheme_screen.dart'
+    as real_admin_create_scheme;
+import '../../presentation/screens/admin/admin_customer_list_screen.dart'
+    as real_admin_customers;
+import '../../presentation/screens/admin/admin_customer_detail_screen.dart'
+    as real_admin_customer_detail;
+import '../../presentation/screens/admin/admin_gst_screen.dart'
+    as real_admin_gst;
+import '../../presentation/screens/admin/admin_reports_screen.dart'
+    as real_admin_reports;
 
 // Keys for shell routing
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
-final GlobalKey<NavigatorState> _mainShellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'mainShell');
-final GlobalKey<NavigatorState> _adminShellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'adminShell');
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'root',
+);
+final GlobalKey<NavigatorState> _mainShellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'mainShell');
+final GlobalKey<NavigatorState> _adminShellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'adminShell');
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
@@ -40,33 +62,40 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/onboarding/customer-type',
-      builder: (context, state) => const real_customer_type.CustomerTypeScreen(),
+      builder: (context, state) =>
+          const real_customer_type.CustomerTypeScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding/register/step1',
+      builder: (context, state) => const RegistrationStep1Screen(),
+    ),
+    GoRoute(
+      path: '/onboarding/register/step2',
+      builder: (context, state) => const RegistrationStep2Screen(),
+    ),
+    GoRoute(
+      path: '/onboarding/register/step3',
+      builder: (context, state) => const RegistrationStep3Screen(),
+    ),
+    GoRoute(
+      path: '/onboarding/register/step4',
+      builder: (context, state) => const RegistrationStep4Screen(),
+    ),
+    GoRoute(
+      path: '/onboarding/verify-otp',
+      builder: (context, state) {
+        final phone = state.extra as String? ?? '';
+        return OtpVerificationScreen(phoneNumber: phone);
+      },
     ),
     GoRoute(
       path: '/onboarding/register',
-      builder: (context, state) => const RegistrationStep1Screen(),
-      routes: [
-        GoRoute(
-          path: 'step2',
-          builder: (context, state) => const RegistrationStep2Screen(),
-          routes: [
-            GoRoute(
-              path: 'step3',
-              builder: (context, state) => const RegistrationStep3Screen(),
-              routes: [
-                GoRoute(
-                  path: 'step4',
-                  builder: (context, state) => const RegistrationStep4Screen(),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
+      redirect: (context, state) => '/onboarding/register/step1',
     ),
     GoRoute(
       path: '/onboarding/success',
-      builder: (context, state) => const real_success.RegistrationSuccessScreen(),
+      builder: (context, state) =>
+          const real_success.RegistrationSuccessScreen(),
     ),
     GoRoute(
       path: '/auth/login',
@@ -80,7 +109,7 @@ final appRouter = GoRouter(
       path: '/auth/pin-entry',
       builder: (context, state) => const real_pin_entry.PinEntryScreen(),
     ),
-    
+
     // Main App Shell
     ShellRoute(
       navigatorKey: _mainShellNavigatorKey,
@@ -98,18 +127,21 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/transactions',
-          builder: (context, state) => const real_transaction.TransactionScreen(),
+          builder: (context, state) =>
+              const real_transaction.TransactionScreen(),
         ),
         GoRoute(
           path: '/schemes',
-          builder: (context, state) => const real_schemes.SchemeEnrollmentScreen(),
+          builder: (context, state) =>
+              const real_schemes.SchemeEnrollmentScreen(),
           routes: [
             GoRoute(
               path: 'enroll',
               parentNavigatorKey: _rootNavigatorKey,
-              builder: (context, state) => const real_enrollment.EnrollmentFlowScreen(),
+              builder: (context, state) =>
+                  const real_enrollment.EnrollmentFlowScreen(),
             ),
-          ]
+          ],
         ),
         GoRoute(
           path: '/profile',
@@ -131,32 +163,38 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: '/admin/dashboard',
-          builder: (context, state) => const real_admin_dashboard.AdminDashboardScreen(),
+          builder: (context, state) =>
+              const real_admin_dashboard.AdminDashboardScreen(),
         ),
         GoRoute(
           path: '/admin/schemes',
-          builder: (context, state) => const real_admin_schemes.AdminSchemeListScreen(),
+          builder: (context, state) =>
+              const real_admin_schemes.AdminSchemeListScreen(),
           routes: [
             GoRoute(
               path: 'create',
               parentNavigatorKey: _rootNavigatorKey,
-              builder: (context, state) => const real_admin_create_scheme.AdminCreateSchemeScreen(),
+              builder: (context, state) =>
+                  const real_admin_create_scheme.AdminCreateSchemeScreen(),
             ),
-          ]
+          ],
         ),
         GoRoute(
           path: '/admin/customers',
-          builder: (context, state) => const real_admin_customers.AdminCustomerListScreen(),
+          builder: (context, state) =>
+              const real_admin_customers.AdminCustomerListScreen(),
           routes: [
             GoRoute(
               path: ':id',
               parentNavigatorKey: _rootNavigatorKey,
               builder: (context, state) {
                 final id = state.pathParameters['id']!;
-                return real_admin_customer_detail.AdminCustomerDetailScreen(customerId: id);
+                return real_admin_customer_detail.AdminCustomerDetailScreen(
+                  customerId: id,
+                );
               },
             ),
-          ]
+          ],
         ),
         GoRoute(
           path: '/admin/gst',
@@ -164,7 +202,8 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/admin/reports',
-          builder: (context, state) => const real_admin_reports.AdminReportsScreen(),
+          builder: (context, state) =>
+              const real_admin_reports.AdminReportsScreen(),
         ),
       ],
     ),

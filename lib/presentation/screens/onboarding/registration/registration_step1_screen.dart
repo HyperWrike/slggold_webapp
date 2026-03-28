@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/core/constants/app_dimensions.dart';
+import 'package:slg_golds/presentation/providers/registration_provider.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
 
-class RegistrationStep1Screen extends StatefulWidget {
+class RegistrationStep1Screen extends ConsumerStatefulWidget {
   const RegistrationStep1Screen({super.key});
 
   @override
-  State<RegistrationStep1Screen> createState() => _RegistrationStep1ScreenState();
+  ConsumerState<RegistrationStep1Screen> createState() =>
+      _RegistrationStep1ScreenState();
 }
 
-class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
+class _RegistrationStep1ScreenState
+    extends ConsumerState<RegistrationStep1Screen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _dobController = TextEditingController();
   final _fatherNameController = TextEditingController();
   final _birthPlaceController = TextEditingController();
-  
+
   String? _selectedGender;
   int? _calculatedAge;
 
@@ -56,8 +60,9 @@ class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
       setState(() {
         _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
         _calculatedAge = DateTime.now().year - picked.year;
-        if (DateTime.now().month < picked.month || 
-            (DateTime.now().month == picked.month && DateTime.now().day < picked.day)) {
+        if (DateTime.now().month < picked.month ||
+            (DateTime.now().month == picked.month &&
+                DateTime.now().day < picked.day)) {
           _calculatedAge = _calculatedAge! - 1;
         }
       });
@@ -66,8 +71,17 @@ class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
 
   void _onNext() {
     if (_formKey.currentState!.validate() && _selectedGender != null) {
-      // In a real app we'd save this to a state provider
-      context.push('/onboarding/register/step2'); // Need to define this route
+      // Save data to provider
+      ref
+          .read(registrationProvider.notifier)
+          .updateStep1(
+            fullName: _nameController.text,
+            dob: _dobController.text,
+            gender: _selectedGender,
+            fatherName: _fatherNameController.text,
+            birthPlace: _birthPlaceController.text,
+          );
+      context.push('/onboarding/register/step2');
     } else if (_selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select your gender')),
@@ -93,33 +107,43 @@ class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
               children: [
                 // Step Indicator
                 Row(
-                  children: List.generate(4, (index) => Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: index == 0 ? AppColors.goldPrimary : AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(2),
+                  children: List.generate(
+                    4,
+                    (index) => Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: index == 0
+                              ? AppColors.goldPrimary
+                              : AppColors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  )),
+                  ),
                 ),
                 const SizedBox(height: AppDimensions.p32),
-                
+
                 Text(
                   'Let\'s get to know you',
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
                 const SizedBox(height: AppDimensions.p24),
-                
+
                 SlgTextField(
                   label: 'Full Name',
                   hint: 'As per Aadhaar',
                   controller: _nameController,
-                  validator: (value) => value!.isEmpty ? 'Name is required' : null,
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.goldPrimary,
+                  ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Name is required' : null,
                 ),
                 const SizedBox(height: AppDimensions.p20),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -130,8 +154,16 @@ class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
                         controller: _dobController,
                         readOnly: true,
                         onTap: () => _selectDate(context),
-                        validator: (value) => value!.isEmpty ? 'Required' : null,
-                        suffixIcon: const Icon(Icons.calendar_today, color: AppColors.goldPrimary),
+                        prefixIcon: const Icon(
+                          Icons.calendar_today,
+                          color: AppColors.goldPrimary,
+                        ),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Required' : null,
+                        suffixIcon: const Icon(
+                          Icons.calendar_today,
+                          color: AppColors.goldPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: AppDimensions.p16),
@@ -141,12 +173,16 @@ class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
                         label: 'Age',
                         hint: _calculatedAge?.toString() ?? '--',
                         readOnly: true,
+                        prefixIcon: const Icon(
+                          Icons.cake_outlined,
+                          color: AppColors.goldPrimary,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: AppDimensions.p20),
-                
+
                 Text(
                   'GENDER',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -164,27 +200,32 @@ class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
                   ],
                 ),
                 const SizedBox(height: AppDimensions.p20),
-                
+
                 SlgTextField(
                   label: 'Father\'s / Husband\'s Name',
                   hint: 'Enter name',
                   controller: _fatherNameController,
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.goldPrimary,
+                  ),
                   validator: (value) => value!.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: AppDimensions.p20),
-                
+
                 SlgTextField(
                   label: 'Place of Birth',
                   hint: 'City / Town',
                   controller: _birthPlaceController,
+                  prefixIcon: const Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.goldPrimary,
+                  ),
                   validator: (value) => value!.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: AppDimensions.p48),
-                
-                SlgButton(
-                  text: 'NEXT STEP',
-                  onPressed: _onNext,
-                ),
+
+                SlgButton(text: 'NEXT STEP', onPressed: _onNext),
               ],
             ),
           ),
@@ -206,10 +247,14 @@ class _RegistrationStep1ScreenState extends State<RegistrationStep1Screen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.goldPrimary.withAlpha(20) : AppColors.surfaceContainerLowest,
+            color: isSelected
+                ? AppColors.goldPrimary.withAlpha(20)
+                : AppColors.surfaceContainerLowest,
             borderRadius: BorderRadius.circular(AppDimensions.r12),
             border: Border.all(
-              color: isSelected ? AppColors.goldPrimary : AppColors.surfaceContainerHigh,
+              color: isSelected
+                  ? AppColors.goldPrimary
+                  : AppColors.surfaceContainerHigh,
               width: isSelected ? 2 : 1,
             ),
           ),

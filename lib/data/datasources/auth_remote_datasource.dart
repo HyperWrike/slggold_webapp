@@ -10,7 +10,7 @@ abstract class AuthRemoteDataSource {
     required Map<String, dynamic> profileData,
     required String pin,
   });
-  
+
   Future<UserModel> loginCustomer(String email, String password);
   Future<void> logout();
   Future<bool> verifyPin(String pin);
@@ -36,7 +36,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       email: email,
       password: password,
     );
-    
+
     if (response.user == null) {
       throw Exception('Login failed');
     }
@@ -46,7 +46,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         .select()
         .eq('id', response.user!.id)
         .single();
-        
+
     return UserModel.fromJson(profileResponse);
   }
 
@@ -74,12 +74,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     // Add pinHash to profile data
     profileData['id'] = response.user!.id;
     profileData['pin_hash'] = _hashPin(pin);
-    profileData['pin_length'] = pin.length;
+    profileData['pin_length'] = pin.length.toString();
     profileData['role'] = 'customer';
 
+    // Use upsert because the auto-trigger may have already created a profile row
     final profileResponse = await supabase
         .from('profiles')
-        .insert(profileData)
+        .upsert(profileData)
         .select()
         .single();
 
@@ -96,7 +97,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         .select('pin_hash')
         .eq('id', user.id)
         .single();
-    
+
     final storedHash = profileResponse['pin_hash'];
     return storedHash == _hashPin(pin);
   }
