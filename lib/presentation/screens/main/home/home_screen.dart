@@ -965,41 +965,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildDefaultTransactions() {
-    return Column(
-      children: [
-        _buildTransactionRow(
-          icon: Icons.savings_outlined,
-          iconColor: AppColors.primary,
-          iconBgColor: AppColors.primaryFixed.withAlpha(77),
-          title: 'Scheme Payment',
-          subtitle: 'Mar 24, 2024 • 10:45 AM',
-          amount: '- ₹500.00',
-          amountColor: AppColors.primary,
-          extra: 'Gold Credit: 0.067g',
-        ),
-        const SizedBox(height: 12),
-        _buildTransactionRow(
-          icon: Icons.shopping_bag_outlined,
-          iconColor: AppColors.secondary,
-          iconBgColor: AppColors.secondaryFixed.withAlpha(77),
-          title: 'Direct Purchase',
-          subtitle: 'Mar 20, 2024 • 04:12 PM',
-          amount: '- ₹2,500.00',
-          amountColor: AppColors.textPrimary,
-          extra: 'Silver Credit: 28.2g',
-        ),
-        const SizedBox(height: 12),
-        _buildTransactionRow(
-          icon: Icons.trending_up,
-          iconColor: AppColors.primaryContainer,
-          iconBgColor: AppColors.primaryContainer.withAlpha(51),
-          title: 'Market Gain Adj.',
-          subtitle: 'Mar 18, 2024 • 09:00 AM',
-          amount: '₹124.80',
-          amountColor: const Color(0xFF2E7D32),
-          extra: 'Value Rebase',
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 40,
+            color: AppColors.textSecondary.withAlpha(128),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'No transactions yet',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
 
@@ -26,13 +26,8 @@ class _AdminGstScreenState extends ConsumerState<AdminGstScreen> {
 
   Future<void> _loadGstRates() async {
     try {
-      final supabase = Supabase.instance.client;
-      final response = await supabase
-          .from('gst_rates')
-          .select()
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
+      final db = ref.read(databaseServiceProvider);
+      final response = await db.getLatestGstRates();
 
       if (response != null && mounted) {
         _goldGstController.text =
@@ -60,18 +55,17 @@ class _AdminGstScreenState extends ConsumerState<AdminGstScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final supabase = Supabase.instance.client;
+      final db = ref.read(databaseServiceProvider);
       final goldGst = double.tryParse(_goldGstController.text) ?? 3.0;
       final silverGst = double.tryParse(_silverGstController.text) ?? 3.0;
       final makingGst =
           double.tryParse(_makingChargesGstController.text) ?? 5.0;
 
-      await supabase.from('gst_rates').insert({
-        'gold_gst': goldGst,
-        'silver_gst': silverGst,
-        'making_charges_gst': makingGst,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+      await db.saveGstRates(
+        goldGst: goldGst,
+        silverGst: silverGst,
+        makingChargesGst: makingGst,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,84 +92,45 @@ class _AdminGstScreenState extends ConsumerState<AdminGstScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text(
-          'GST Settings',
-          style: TextStyle(
-            fontFamily: 'Cormorant Garamond',
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: const Text('GST Configuration'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withAlpha(26),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.error.withAlpha(77)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.warning_amber, color: AppColors.error, size: 20),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Changing GST rates affects all future transactions. Past transactions remain unchanged.',
-                        style: TextStyle(fontSize: 13, color: AppColors.error),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              SlgTextField(
-                label: 'Gold GST / Cess (%)',
-                hint: '3.0',
-                controller: _goldGstController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              SlgTextField(
-                label: 'Silver GST / Cess (%)',
-                hint: '3.0',
-                controller: _silverGstController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              SlgTextField(
-                label: 'Making Charges GST (%)',
-                hint: '5.0',
-                controller: _makingChargesGstController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-
-              const SizedBox(height: 48),
-
-              SlgButton(
-                text: 'SAVE GST RATES',
-                isLoading: _isLoading,
-                onPressed: _isLoading ? () {} : _saveGstRates,
-              ),
-            ],
-          ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Configure GST rates for gold, silver, and making charges.',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            SlgTextField(
+              controller: _goldGstController,
+              label: 'Gold GST (%)',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            SlgTextField(
+              controller: _silverGstController,
+              label: 'Silver GST (%)',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            SlgTextField(
+              controller: _makingChargesGstController,
+              label: 'Making Charges GST (%)',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 32),
+            SlgButton(
+              text: 'Save GST Rates',
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : _saveGstRates,
+            ),
+          ],
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../data/datasources/database_service.dart';
+
+import 'auth_provider.dart';
 
 final userDataProvider = FutureProvider.family<Map<String, dynamic>?, String>((
   ref,

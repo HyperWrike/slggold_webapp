@@ -2,11 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
 import 'package:intl/intl.dart';
 
 class AdminSchemeListScreen extends ConsumerWidget {
   const AdminSchemeListScreen({super.key});
+
+  Future<void> _confirmAndRemove(
+    BuildContext context,
+    WidgetRef ref,
+    String schemeId,
+    String schemeName,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Scheme'),
+        content: Text(
+          'Are you sure you want to delete "$schemeName"? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final db = ref.read(databaseServiceProvider);
+      await db.removeScheme(schemeId);
+      ref.invalidate(availableSchemesProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('"$schemeName" deleted'),
+            backgroundColor: const Color(0xFF059669),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -74,6 +129,7 @@ class AdminSchemeListScreen extends ConsumerWidget {
               itemCount: schemes.length,
               itemBuilder: (context, index) {
                 final scheme = schemes[index];
+                final id = scheme['id']?.toString() ?? '';
                 final name = scheme['name'] as String? ?? 'Scheme';
                 final tenure = (scheme['tenure_months'] as int?) ?? 0;
                 final monthly =
@@ -175,27 +231,44 @@ class AdminSchemeListScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? const Color(0xFFD1FAE5)
-                                : const Color(0xFFFEE2E2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            isActive ? 'Active' : 'Inactive',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: isActive
-                                  ? const Color(0xFF047857)
-                                  : AppColors.error,
+                        Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? const Color(0xFFD1FAE5)
+                                    : const Color(0xFFFEE2E2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isActive ? 'Active' : 'Inactive',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: isActive
+                                      ? const Color(0xFF047857)
+                                      : AppColors.error,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              color: AppColors.error,
+                              tooltip: 'Delete scheme',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              onPressed: () =>
+                                  _confirmAndRemove(context, ref, id, name),
+                            ),
+                          ],
                         ),
                       ],
                     ),

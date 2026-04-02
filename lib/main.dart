@@ -1,23 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:convex_flutter/convex_flutter.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'core/constants/convex_env.dart';
+import 'core/convex_launch_state.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'data/datasources/convex_api.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Use HTML renderer for web (faster than CanvasKit)
   usePathUrlStrategy();
 
-  await Supabase.initialize(
-    url: 'https://zgoxakkdgohvykvytwjw.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnb3hha2tkZ29odnlrdnl0d2p3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzI4NzksImV4cCI6MjA4OTg0ODg3OX0.wvHXs9A0P5XlgSdVm9r6KqwhH1MxeJOss9QlLLi2Puc',
-  );
+  ConvexLaunchState.initError = null;
+  ConvexLaunchState.isReady = false;
+
+  if (ConvexEnv.isDeploymentConfigured) {
+    try {
+      await ConvexClient.initialize(
+        ConvexConfig(
+          deploymentUrl: ConvexEnv.deploymentUrl.trim(),
+          clientId: 'slg-golds-flutter',
+          healthCheckQuery: 'health:ping',
+        ),
+      );
+      ConvexLaunchState.isReady = true;
+
+      // Seed default admin if not exists (fire-and-forget)
+      convexAction('seed:resetAdmin', {}).catchError((_) {});
+    } catch (e, st) {
+      debugPrint('ConvexClient.initialize failed: $e\n$st');
+      ConvexLaunchState.initError = e.toString();
+      ConvexLaunchState.isReady = false;
+    }
+  } else {
+    debugPrint(
+      'CONVEX_URL missing or invalid. Set --dart-define=CONVEX_URL=http://127.0.0.1:3210 for local Convex dev or use your https://<deployment>.convex.cloud URL.',
+    );
+  }
 
   runApp(const ProviderScope(child: SlgGoldsApp()));
 }
@@ -32,8 +54,6 @@ class SlgGoldsApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
-      // Use HTML renderer for web performance
-      // Run with: flutter run -d chrome --web-renderer html
     );
   }
 }

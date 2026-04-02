@@ -1,30 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../data/datasources/auth_remote_datasource.dart';
-import '../../../data/repositories/auth_repository_impl.dart';
-import '../../../domain/entities/user_entity.dart';
-import '../../../domain/usecases/auth/get_current_user_usecase.dart';
-import '../../../domain/usecases/auth/login_usecase.dart';
-import '../../../domain/usecases/auth/logout_usecase.dart';
-import '../../../domain/usecases/auth/register_usecase.dart';
-import '../../../domain/usecases/auth/verify_pin_usecase.dart';
 
-// 1. Core Supabase Instance
-final supabaseProvider = Provider<SupabaseClient>(
-  (ref) => Supabase.instance.client,
+import '../../core/services/local_storage_service.dart';
+import '../../data/datasources/auth_remote_datasource.dart';
+import '../../data/datasources/database_service.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/usecases/auth/get_current_user_usecase.dart';
+import '../../domain/usecases/auth/login_usecase.dart';
+import '../../domain/usecases/auth/logout_usecase.dart';
+import '../../domain/usecases/auth/register_usecase.dart';
+import '../../domain/usecases/auth/verify_pin_usecase.dart';
+
+final localStorageServiceProvider = Provider<LocalStorageService>(
+  (ref) => LocalStorageService(),
 );
 
-// 2. Data Sources
+final databaseServiceProvider = Provider<DatabaseService>(
+  (ref) => DatabaseService(ref.watch(localStorageServiceProvider)),
+);
+
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
-  return AuthRemoteDataSourceImpl(ref.watch(supabaseProvider));
+  return AuthRemoteDataSourceImpl(ref.watch(localStorageServiceProvider));
 });
 
-// 3. Repositories
 final authRepositoryProvider = Provider<AuthRepositoryImpl>((ref) {
   return AuthRepositoryImpl(ref.watch(authRemoteDataSourceProvider));
 });
 
-// 4. Use Cases
 final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
   return LoginUseCase(ref.watch(authRepositoryProvider));
 });
@@ -45,7 +47,6 @@ final logoutUseCaseProvider = Provider<LogoutUseCase>((ref) {
   return LogoutUseCase(ref.watch(authRepositoryProvider));
 });
 
-// 5. Auth State Notifier
 class AuthState {
   final UserEntity? user;
   final bool isLoading;

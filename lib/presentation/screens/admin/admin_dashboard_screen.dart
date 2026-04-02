@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
-import 'package:slg_golds/data/datasources/database_service.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -668,120 +668,35 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Widget _buildDefaultTransactions() {
-    final defaults = [
-      {
-        'name': 'Arjun Rao',
-        'initials': 'AR',
-        'desc': 'Gold Savings Plan (A-12)',
-        'amount': 5000,
-        'time': '10:42 AM',
-      },
-      {
-        'name': 'Priya Sharma',
-        'initials': 'PS',
-        'desc': 'Jewelry Accumulation',
-        'amount': 12000,
-        'time': '09:15 AM',
-      },
-      {
-        'name': 'Vikram Singh',
-        'initials': 'VS',
-        'desc': 'Instant Gold Buy',
-        'amount': 2500,
-        'time': 'Yesterday',
-      },
-      {
-        'name': 'Meera Kulkarni',
-        'initials': 'MK',
-        'desc': 'SIP Installment',
-        'amount': 1000,
-        'time': 'Yesterday',
-      },
-      {
-        'name': 'Suresh Iyer',
-        'initials': 'SI',
-        'desc': 'Special Festival Offer',
-        'amount': 4000,
-        'time': 'Yesterday',
-      },
-    ];
-
-    return Column(
-      children: defaults.map((d) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryFixed,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        d['initials'] as String,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        d['name'] as String,
-                        style: const TextStyle(
-                          fontFamily: 'DM Sans',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        d['desc'] as String,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFA8A29E),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '+₹${NumberFormat('#,##0', 'en_IN').format(d['amount'])}',
-                    style: const TextStyle(
-                      fontFamily: 'DM Mono',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF059669),
-                    ),
-                  ),
-                  Text(
-                    d['time'] as String,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFFA8A29E),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 48,
+            color: AppColors.textSecondary.withAlpha(128),
           ),
-        );
-      }).toList(),
+          const SizedBox(height: 12),
+          const Text(
+            'No transactions yet',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Transactions will appear here when customers make payments.',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary.withAlpha(179),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

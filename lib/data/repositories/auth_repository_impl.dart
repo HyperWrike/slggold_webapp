@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../core/errors/failures.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -16,16 +16,19 @@ class AuthRepositoryImpl implements AuthRepository {
     String password,
   ) async {
     try {
-      // If input contains @, use as email directly; otherwise append @slggolds.com
       final email = username.contains('@')
           ? username
           : '$username@slggolds.com';
       final user = await remoteDataSource.loginCustomer(email, password);
       return Right(user);
-    } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      final msg = e.toString();
+      if (msg.contains('Invalid email') ||
+          msg.contains('already exists') ||
+          msg.contains('Unauthorized')) {
+        return Left(AuthFailure(msg.replaceFirst('Exception: ', '')));
+      }
+      return Left(AuthFailure(msg.replaceFirst('Exception: ', '')));
     }
   }
 
@@ -81,10 +84,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       return Right(user);
-    } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(AuthFailure(e.toString().replaceFirst('Exception: ', '')));
     }
   }
 

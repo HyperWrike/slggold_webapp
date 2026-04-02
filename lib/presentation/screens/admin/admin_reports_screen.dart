@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
-import 'package:slg_golds/data/datasources/database_service.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
 class AdminReportsScreen extends ConsumerStatefulWidget {
@@ -29,7 +28,6 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
   Future<void> _loadReportData() async {
     setState(() => _isLoading = true);
     try {
-      final supabase = Supabase.instance.client;
       final db = ref.read(databaseServiceProvider);
       final stats = await ref.read(adminStatsProvider.future);
 
@@ -47,8 +45,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
       }
 
       // Load enrollments for scheme performance
-      final enrollmentsResponse = await supabase.from('enrollments').select();
-      final enrollments = List<Map<String, dynamic>>.from(enrollmentsResponse);
+      final enrollments = await db.getAllEnrollmentsForReports();
 
       // Build scheme performance data
       List<Map<String, dynamic>> schemePerf = [];

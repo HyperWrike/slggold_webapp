@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
-import 'package:slg_golds/data/datasources/database_service.dart';
 import 'package:intl/intl.dart';
 
 class NotificationPopup extends ConsumerWidget {

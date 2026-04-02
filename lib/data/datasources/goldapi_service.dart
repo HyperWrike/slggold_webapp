@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'convex_api.dart';
 
 class MetalPrices {
   final double goldPricePerGram;
@@ -15,13 +16,11 @@ class MetalPrices {
 }
 
 class GoldApiService {
-  // replace 'YOUR_GOLDAPI_IO_KEY' with your actual key from goldapi.io
-  static const String _apiKey = 'YOUR_GOLDAPI_IO_KEY';
+  static const String _apiKey = 'goldapi-ihulsmnh6rrwa-io';
   static const String _baseUrl = 'https://www.goldapi.io/api';
 
-  // Fallback prices in INR per gram (updated to current market rates)
-  static const double _fallbackGoldPrice = 14471.0;
-  static const double _fallbackSilverPrice = 240.0;
+  static const double _fallbackGoldPrice = 8500.0;
+  static const double _fallbackSilverPrice = 95.0;
 
   Future<double> _fetchGoldFromApi() async {
     try {
@@ -63,23 +62,16 @@ class GoldApiService {
   }
 
   Future<MetalPrices> getMetalPrices() async {
-    final supabase = Supabase.instance.client;
-
     try {
-      final cached = await supabase
-          .from('metal_prices')
-          .select()
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      if (cached != null) {
-        final lastUpdated = DateTime.parse(cached['created_at']);
+      final cached = await convexQuery('metalPrices:latest', {});
+      if (cached is Map) {
+        final m = Map<String, dynamic>.from(cached);
+        final lastUpdated = DateTime.parse(m['created_at'] as String);
         final now = DateTime.now();
         if (now.difference(lastUpdated).inMinutes < 30) {
           return MetalPrices(
-            goldPricePerGram: (cached['gold_price'] as num).toDouble(),
-            silverPricePerGram: (cached['silver_price'] as num).toDouble(),
+            goldPricePerGram: (m['gold_price'] as num).toDouble(),
+            silverPricePerGram: (m['silver_price'] as num).toDouble(),
             lastUpdated: lastUpdated,
           );
         }
@@ -90,7 +82,7 @@ class GoldApiService {
     double silverPrice = await _fetchSilverFromApi();
 
     try {
-      await supabase.from('metal_prices').insert({
+      await convexMutation('metalPrices:insert', {
         'gold_price': goldPrice,
         'silver_price': silverPrice,
       });

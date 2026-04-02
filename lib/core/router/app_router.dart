@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
+import '../convex_launch_state.dart';
 import '../../presentation/screens/dummy_screens.dart';
+import '../../presentation/screens/setup/convex_setup_screen.dart';
 import '../../presentation/screens/onboarding/splash_screen.dart'
     as real_splash;
 import '../../presentation/screens/onboarding/customer_type_screen.dart'
@@ -55,7 +58,24 @@ final GlobalKey<NavigatorState> _adminShellNavigatorKey =
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/splash',
+  redirect: (context, state) {
+    final path = state.uri.path;
+    if (!ConvexLaunchState.isReady) {
+      if (path != '/convex-setup') {
+        return '/convex-setup';
+      }
+      return null;
+    }
+    if (path == '/convex-setup') {
+      return '/splash';
+    }
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/convex-setup',
+      builder: (context, state) => const ConvexSetupScreen(),
+    ),
     GoRoute(
       path: '/splash',
       builder: (context, state) => const real_splash.SplashScreen(),

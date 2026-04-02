@@ -3,15 +3,82 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class OtpService {
-  // Twilio Config (Free $15 trial - get from twilio.com)
-  static const String _twilioAccountSid = 'ACa611b9e7c550246cadfa0eecce6e3445';
-  static const String _twilioAuthToken = 'fdf39f8ff5348a0ecd01de7578c0fb3d';
-  static const String _twilioFromNumber = '+12603466656';
+  // OTP provider configuration is passed at build time using `--dart-define`.
+  //
+  // Examples:
+  //  - flutter run --dart-define=TWILIO_ACCOUNT_SID=xxx --dart-define=TWILIO_AUTH_TOKEN=yyy ...
+  static const String _twilioAccountSid = String.fromEnvironment(
+    'TWILIO_ACCOUNT_SID',
+    defaultValue: 'ACa611b9e7c550246cadfa0eecce6e3445',
+  );
+  static const String _twilioAuthToken = String.fromEnvironment(
+    'TWILIO_AUTH_TOKEN',
+    defaultValue: 'fdf39f8ff5348a0ecd01de7578c0fb3d',
+  );
+  static const String _twilioFromNumber = String.fromEnvironment(
+    'TWILIO_FROM_NUMBER',
+    defaultValue: '+12603466656',
+  );
 
-  // MSG91 Config (Free tier - get from msg91.com)
-  static const String _msg91AuthKey = 'YOUR_MSG91_AUTH_KEY';
-  static const String _msg91SenderId = 'SLGOLD';
-  static const String _msg91TemplateId = 'YOUR_TEMPLATE_ID';
+  // Fast2SMS (commonly cheaper for India)
+  static const String _fast2smsApiKey = String.fromEnvironment(
+    'FAST2SMS_API_KEY',
+    defaultValue:
+        'Dx8dAqCa5EbVznTcHuGfQ6Kh3Ps2ZUIYkNeLpj9OoMvywtm4XB4al9ZLUEfG7r1NdjMA6pnysiWPB05I',
+  );
+  static const String _fast2smsRoute = String.fromEnvironment(
+    'FAST2SMS_ROUTE',
+    defaultValue: 'otp',
+  );
+
+  // Textlocal (backup)
+  static const String _textlocalApiKey = String.fromEnvironment(
+    'TEXTLOCAL_API_KEY',
+    defaultValue: '',
+  );
+  static const String _textlocalSender = String.fromEnvironment(
+    'TEXTLOCAL_SENDER',
+    defaultValue: '',
+  );
+
+  static const String _defaultProviderOrder = 'fast2sms,twilio,textlocal';
+
+  List<_OtpProvider> _providerOrder() {
+    const raw = String.fromEnvironment(
+      'OTP_PROVIDER_ORDER',
+      defaultValue: _defaultProviderOrder,
+    );
+    final order = raw
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .where((s) => s.isNotEmpty);
+
+    final mapped = <_OtpProvider>[];
+    for (final name in order) {
+      switch (name) {
+        case 'twilio':
+          mapped.add(_OtpProvider.twilio);
+          break;
+        case 'fast2sms':
+          mapped.add(_OtpProvider.fast2sms);
+          break;
+        case 'textlocal':
+          mapped.add(_OtpProvider.textlocal);
+          break;
+      }
+    }
+
+    // Fallback: at least try something if parsing got empty.
+    if (mapped.isEmpty) {
+      mapped.addAll(const <_OtpProvider>[
+        _OtpProvider.twilio,
+        _OtpProvider.fast2sms,
+        _OtpProvider.textlocal,
+      ]);
+    }
+
+    return mapped;
+  }
 
   /// Generate a random 6-digit OTP
   String generateOtp() {
@@ -19,8 +86,9 @@ class OtpService {
     return (100000 + random.nextInt(900000)).toString();
   }
 
-  /// Send OTP - tries SMS services in order
+  /// Send OTP via Twilio SMS
   Future<OtpResult> sendOtp(String mobileNumber, String otpValue) async {
+    // Clean phone number
     final cleanNumber = mobileNumber
         .replaceAll('+91', '')
         .replaceAll(' ', '')
@@ -33,23 +101,48 @@ class OtpService {
       );
     }
 
-    // Try Twilio first (most reliable SMS)
-    final result1 = await _tryTwilio(cleanNumber, otpValue);
-    if (result1.success) return result1;
+    final providers = _providerOrder();
 
-    // Try MSG91
-    final result2 = await _tryMsg91(cleanNumber, otpValue);
-    if (result2.success) return result2;
-
-    // All SMS failed
-    return OtpResult(
+    OtpResult lastFailure = OtpResult(
       success: false,
-      message: 'SMS services unavailable. Check API keys.',
+      message: 'No OTP provider is configured.',
     );
+
+    for (final provider in providers) {
+      final result = await _sendWithProvider(provider, cleanNumber, otpValue);
+      if (result.success) return result;
+      lastFailure = result;
+    }
+
+    return lastFailure;
   }
 
-  /// Method 1: Twilio SMS API
-  Future<OtpResult> _tryTwilio(String phone, String otp) async {
+  Future<OtpResult> _sendWithProvider(
+    _OtpProvider provider,
+    String phone,
+    String otp,
+  ) async {
+    switch (provider) {
+      case _OtpProvider.twilio:
+        return _sendTwilioSms(phone, otp);
+      case _OtpProvider.fast2sms:
+        return _sendFast2Sms(phone, otp);
+      case _OtpProvider.textlocal:
+        return _sendTextlocalSms(phone, otp);
+    }
+  }
+
+  /// Twilio SMS API
+  Future<OtpResult> _sendTwilioSms(String phone, String otp) async {
+    if (_twilioAccountSid.isEmpty ||
+        _twilioAuthToken.isEmpty ||
+        _twilioFromNumber.isEmpty) {
+      return OtpResult(
+        success: false,
+        message: 'Twilio not configured (missing env vars).',
+      );
+    }
+
     try {
       // Basic Auth with Account SID:Auth Token
       final credentials = base64Encode(
@@ -77,50 +170,188 @@ class OtpService {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return OtpResult(success: true, message: 'OTP sent via Twilio SMS');
+        return OtpResult(
+          success: true,
+          message: 'OTP sent via Twilio to +91$phone',
+        );
+      } else {
+        try {
+          final error = json.decode(response.body);
+          final errorMsg = error['message'] ?? 'Unknown error';
+          final errorCode = error['code'] ?? '';
+
+          // Common Twilio errors for Indian numbers
+          if (errorCode == 21211) {
+            return OtpResult(
+              success: false,
+              message: 'Invalid phone number format',
+            );
+          } else if (errorCode == 21408) {
+            return OtpResult(
+              success: false,
+              message:
+                  'India not enabled. Go to Twilio Console → Messaging → Geo Permissions → Enable India',
+            );
+          } else if (errorCode == 21608) {
+            return OtpResult(
+              success: false,
+              message:
+                  'Phone number not verified. Twilio trial can only send to verified numbers. Verify at: console.twilio.com → Phone Numbers → Verified Caller IDs',
+            );
+          } else if (errorCode == 21610) {
+            return OtpResult(
+              success: false,
+              message:
+                  'This phone has opted out of SMS. Reply START to your Twilio number to opt in.',
+            );
+          }
+
+          return OtpResult(
+            success: false,
+            message: 'Twilio error ($errorCode): $errorMsg',
+          );
+        } catch (_) {
+          return OtpResult(
+            success: false,
+            message: 'Twilio failed (${response.statusCode}).',
+          );
+        }
       }
-      return OtpResult(success: false, message: 'Twilio SMS failed');
     } catch (e) {
-      return OtpResult(success: false, message: 'Twilio error');
+      return OtpResult(
+        success: false,
+        message: 'Network error: Check internet connection',
+      );
     }
   }
 
-  /// Method 2: MSG91 SMS API (Free: 20 SMS/day)
-  Future<OtpResult> _tryMsg91(String phone, String otp) async {
-    try {
-      final url = Uri.parse('https://control.msg91.com/api/v5/otp');
+  /// Fast2SMS OTP (usually cheaper in India)
+  Future<OtpResult> _sendFast2Sms(String phone, String otp) async {
+    if (_fast2smsApiKey.isEmpty) {
+      return OtpResult(
+        success: false,
+        message: 'Fast2SMS not configured (missing FAST2SMS_API_KEY).',
+      );
+    }
 
+    try {
+      final url = Uri.parse('https://www.fast2sms.com/dev/bulkV2');
       final response = await http
           .post(
             url,
             headers: {
-              'accept': 'application/json',
-              'content-type': 'application/json',
-              'authkey': _msg91AuthKey,
+              'authorization': _fast2smsApiKey,
+              'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: json.encode({
-              'template_id': _msg91TemplateId,
-              'mobile': '91$phone',
-              'authkey': _msg91AuthKey,
-              'otp': otp,
-              'sender': _msg91SenderId,
-            }),
+            body: {
+              'route': _fast2smsRoute,
+              'variables_values': otp,
+              'numbers': phone,
+            },
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['type'] == 'success') {
-          return OtpResult(success: true, message: 'OTP sent via MSG91');
+        if (data is Map) {
+          final ret = data['return'];
+          final statusCode = int.tryParse('${data['status_code'] ?? ''}');
+          final isSuccess = ret == true || '$ret'.toLowerCase() == 'true';
+
+          if (isSuccess) {
+            return OtpResult(
+              success: true,
+              message: 'OTP sent via Fast2SMS to +91$phone',
+            );
+          }
+
+          if (statusCode == 996) {
+            return OtpResult(
+              success: false,
+              message:
+                  'Fast2SMS account setup incomplete. Complete website verification in Fast2SMS OTP menu, or use DLT SMS API.',
+            );
+          }
+
+          final error = data['message'] ?? data['error'] ?? 'Unknown error';
+          return OtpResult(success: false, message: 'Fast2SMS failed: $error');
         }
+        return OtpResult(
+          success: false,
+          message: 'Fast2SMS failed (unexpected response).',
+        );
       }
-      return OtpResult(success: false, message: 'MSG91 failed');
+
+      return OtpResult(
+        success: false,
+        message: 'Fast2SMS failed (${response.statusCode}).',
+      );
     } catch (e) {
-      return OtpResult(success: false, message: 'MSG91 error');
+      return OtpResult(success: false, message: 'Fast2SMS network error: $e');
     }
   }
 
-  /// Verify OTP
+  /// Textlocal OTP (backup)
+  Future<OtpResult> _sendTextlocalSms(String phone, String otp) async {
+    if (_textlocalApiKey.isEmpty) {
+      return OtpResult(
+        success: false,
+        message: 'Textlocal not configured (missing TEXTLOCAL_API_KEY).',
+      );
+    }
+
+    try {
+      final url = Uri.parse('https://api.textlocal.in/send/');
+      final body = <String, String>{
+        'apikey': _textlocalApiKey,
+        'numbers': '+91$phone',
+        'message': 'Your SLG Golds verification code is: $otp.',
+      };
+      if (_textlocalSender.isNotEmpty) {
+        body['sender'] = _textlocalSender;
+      }
+
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is Map) {
+          final status = data['status'];
+          if (status == 'success' || data['type'] == 'success') {
+            return OtpResult(
+              success: true,
+              message: 'OTP sent via Textlocal to +91$phone',
+            );
+          }
+          if (data['errors'] != null) {
+            return OtpResult(
+              success: false,
+              message: 'Textlocal error: ${data['errors']}',
+            );
+          }
+        }
+        return OtpResult(
+          success: false,
+          message: 'Textlocal failed (unexpected response).',
+        );
+      }
+
+      return OtpResult(
+        success: false,
+        message: 'Textlocal failed (${response.statusCode}).',
+      );
+    } catch (e) {
+      return OtpResult(success: false, message: 'Textlocal network error: $e');
+    }
+  }
+
+  /// Verify OTP (local comparison)
   bool verifyOtp(String inputOtp, String generatedOtp) {
     return inputOtp == generatedOtp;
   }
@@ -132,3 +363,5 @@ class OtpResult {
 
   OtpResult({required this.success, required this.message});
 }
+
+enum _OtpProvider { twilio, fast2sms, textlocal }

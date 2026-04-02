@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/core/constants/app_dimensions.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
@@ -34,52 +34,20 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final supabase = Supabase.instance.client;
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      final response = await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      final db = ref.read(databaseServiceProvider);
+      final profile = await db.adminLogin(email, password);
 
-      if (response.user == null) {
-        _showError('Login failed.');
+      if (profile == null) {
+        _showError(
+          'Login failed. Use an admin account or check your password.',
+        );
         return;
       }
 
-      final userId = response.user!.id;
-
-      // Check profile, create if missing
-      var profile = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .maybeSingle();
-
-      if (profile == null) {
-        await supabase.from('profiles').upsert({
-          'id': userId,
-          'full_name': 'SLG Admin',
-          'username': email.split('@').first,
-          'role': 'admin',
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      } else {
-        final role = profile['role'] as String? ?? '';
-        if (role != 'admin' && role != 'manager') {
-          await supabase
-              .from('profiles')
-              .update({'role': 'admin'})
-              .eq('id', userId);
-        }
-      }
-
       if (mounted) context.go('/admin/dashboard');
-    } on AuthException catch (e) {
-      _showError(
-        '${e.message}\n\nIf user exists, use the exact password you created it with.',
-      );
     } catch (e) {
       _showError('Login failed: ${e.toString()}');
     } finally {
@@ -99,32 +67,16 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final supabase = Supabase.instance.client;
-
-      final response = await supabase.auth.signUp(
-        email: email,
-        password: password,
-      );
-
-      if (response.user != null) {
-        await supabase.from('profiles').upsert({
-          'id': response.user!.id,
-          'full_name': 'SLG Admin',
-          'username': email.split('@').first,
-          'role': 'admin',
-          'created_at': DateTime.now().toIso8601String(),
-        });
-
-        _showSuccess('Admin created! You can now click LOGIN.');
-      }
-    } on AuthException catch (e) {
-      if (e.message.contains('already') || e.message.contains('registered')) {
+      final db = ref.read(databaseServiceProvider);
+      await db.registerAdminAccount(email: email, password: password);
+      _showSuccess('Admin created! You can now click LOGIN.');
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('already') || msg.contains('exists')) {
         _showAccountExistsDialog(email);
       } else {
-        _showError(e.message);
+        _showError(msg);
       }
-    } catch (e) {
-      _showError('Failed: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -145,28 +97,13 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('The email "$email" already exists in Supabase Auth.'),
+            Text(
+              'The email "$email" is already registered.',
+            ),
             const SizedBox(height: 16),
             const Text(
-              'Fix in Supabase Dashboard:',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '1. Go to Authentication → Users\n'
-              '2. Find the user by email\n'
-              '3. Click ⋮ → "Send recovery email" to reset password\n'
-              '4. OR click ⋮ → "Delete user" then try creating again',
+              'Use LOGIN with that email and password, or use a different email for a new admin.',
               style: TextStyle(fontSize: 13, height: 1.6),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'IMPORTANT: If you created the user in Supabase Dashboard, use THAT password to login, not a new one.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.red,
-                fontWeight: FontWeight.w600,
-              ),
             ),
           ],
         ),
@@ -345,9 +282,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                         'EXISTING ADMIN:\n'
                         'Just click LOGIN with your password.\n\n'
                         'If you see "already exists":\n'
-                        '→ Delete the user in Supabase Dashboard\n'
-                        '  (Authentication → Users → ⋮ → Delete)\n'
-                        '→ Then try "CREATE NEW ADMIN" again',
+                        '→ Use LOGIN with that email, or pick a different email.',
                         style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textSecondary,

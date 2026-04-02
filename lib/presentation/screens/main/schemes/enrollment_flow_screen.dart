@@ -6,7 +6,6 @@ import 'package:slg_golds/core/constants/app_dimensions.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
 import 'package:slg_golds/presentation/providers/auth_provider.dart';
-import 'package:slg_golds/data/datasources/database_service.dart';
 import 'package:intl/intl.dart';
 
 class EnrollmentFlowScreen extends ConsumerStatefulWidget {

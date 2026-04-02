@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
-import 'package:slg_golds/data/datasources/database_service.dart';
 import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
 import 'package:intl/intl.dart';
@@ -36,7 +35,7 @@ class _AdminCreateSchemeScreenState
   Future<void> _loadEnrollmentCounts() async {
     // Count total active enrollments across all schemes
     try {
-      final db = DatabaseService(ref.read(supabaseProvider));
+      final db = ref.read(databaseServiceProvider);
       final schemes = await db.getAvailableSchemes();
       int total = 0;
       for (final s in schemes) {

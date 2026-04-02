@@ -85,13 +85,14 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           _resendSeconds = 30;
           _startResendTimer();
           _error = null;
+          _showOtpOnScreen = false;
         } else {
-          // SMS failed - show OTP on screen for testing
+          // SMS failed - show error and OTP on screen for testing
           _otpSent = true;
           _showOtpOnScreen = true;
           _resendSeconds = 30;
           _startResendTimer();
-          _error = null;
+          _error = result.message;
         }
       });
 
@@ -106,9 +107,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('SMS not sent. OTP shown on screen for testing.'),
+            content: Text(result.message),
             backgroundColor: Colors.orange,
-            duration: Duration(seconds: 3),
+            duration: Duration(seconds: 5),
           ),
         );
       }
@@ -240,59 +241,30 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               ),
               const SizedBox(height: AppDimensions.p24),
 
-              // Show OTP on screen for testing when SMS fails
+              // Show SMS failure message (no OTP displayed)
               if (_showOtpOnScreen && _generatedOtp != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 24),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withAlpha(26),
+                    color: Colors.red.withAlpha(26),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withAlpha(77)),
+                    border: Border.all(color: Colors.red.withAlpha(77)),
                   ),
-                  child: Column(
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 16,
-                            color: Colors.orange,
+                      Icon(Icons.error_outline, size: 16, color: Colors.red),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'SMS could not be sent. Please check your SMS provider configuration and try again.',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Colors.red,
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            'SMS Service Unavailable',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Your verification code is:',
-                        style: TextStyle(fontSize: 13),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _generatedOtp!,
-                        style: const TextStyle(
-                          fontFamily: 'DM Mono',
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          letterSpacing: 8,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Enter this code below to continue',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ],
@@ -439,42 +411,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 ),
               ),
               const SizedBox(height: AppDimensions.p24),
-
-              // Skip verification option
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.outlineVariant.withAlpha(51),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Having trouble receiving OTP?',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () => context.push('/onboarding/register/step3'),
-                      child: const Text(
-                        'Continue without verification →',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),

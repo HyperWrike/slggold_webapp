@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
 import 'package:slg_golds/core/services/biometric_service.dart';
+import 'package:slg_golds/core/services/local_storage_service.dart';
 import 'package:slg_golds/presentation/widgets/notification_popup.dart';
 import 'package:intl/intl.dart';
 import 'package:crypto/crypto.dart';
@@ -22,6 +22,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _biometricEnabled = false;
   bool _notificationsEnabled = true;
   final BiometricService _biometricService = BiometricService();
+  final LocalStorageService _localStorage = LocalStorageService();
 
   @override
   void initState() {
@@ -31,8 +32,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _checkBiometric() async {
     final available = await _biometricService.isBiometricAvailable();
+    final saved = await _localStorage.getBiometricEnabled();
     if (mounted) {
-      setState(() => _biometricEnabled = available);
+      setState(() => _biometricEnabled = available && saved);
     }
   }
 
@@ -684,9 +686,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       final authenticated = await _biometricService
                           .authenticate();
                       if (authenticated && mounted) {
+                        await _localStorage.saveBiometricEnabled(true);
                         setState(() => _biometricEnabled = true);
                       }
                     } else {
+                      await _localStorage.saveBiometricEnabled(false);
                       setState(() => _biometricEnabled = false);
                     }
                   },
@@ -972,15 +976,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 return;
               }
 
-              // Update PIN in Supabase
               final userId = ref.read(authNotifierProvider).user?.id;
               if (userId != null) {
                 try {
-                  final supabase = ref.read(supabaseProvider);
-                  await supabase
-                      .from('profiles')
-                      .update({'pin_hash': _hashPin(newPin)})
-                      .eq('id', userId);
+                  final db = ref.read(databaseServiceProvider);
+                  await db.updatePinHash(_hashPin(newPin));
 
                   if (context.mounted) {
                     Navigator.pop(ctx);
@@ -1085,42 +1085,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               }
 
               try {
-                final supabase = ref.read(supabaseProvider);
+                final db = ref.read(databaseServiceProvider);
+                await db.changeAccountPassword(
+                  currentPassword: currentPassword,
+                  newPassword: newPassword,
+                );
 
-                // Re-authenticate with current password
-                final user = supabase.auth.currentUser;
-                if (user?.email != null) {
-                  try {
-                    await supabase.auth.signInWithPassword(
-                      email: user!.email!,
-                      password: currentPassword,
-                    );
-                  } catch (_) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Current password is incorrect'),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                    }
-                    return;
-                  }
-
-                  // Update password
-                  await supabase.auth.updateUser(
-                    UserAttributes(password: newPassword),
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Password changed successfully'),
+                      backgroundColor: Color(0xFF059669),
+                    ),
                   );
-
-                  if (context.mounted) {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Password changed successfully'),
-                        backgroundColor: Color(0xFF059669),
-                      ),
-                    );
-                  }
                 }
               } catch (e) {
                 if (context.mounted) {
@@ -1186,11 +1164,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               final userId = ref.read(authNotifierProvider).user?.id;
               if (userId != null) {
                 try {
-                  final supabase = ref.read(supabaseProvider);
-                  await supabase
-                      .from('profiles')
-                      .update({'phone': phone})
-                      .eq('id', userId);
+                  final db = ref.read(databaseServiceProvider);
+                  await db.updatePhoneNumber(phone);
 
                   if (context.mounted) {
                     Navigator.pop(ctx);

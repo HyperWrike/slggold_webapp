@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
 class AdminCustomerListScreen extends ConsumerStatefulWidget {
@@ -977,13 +977,8 @@ class _AdminCustomerListScreenState
 
   Future<int> _getEnrollmentCount(String userId) async {
     try {
-      final supabase = Supabase.instance.client;
-      final response = await supabase
-          .from('enrollments')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('status', 'active');
-      return (response as List).length;
+      final db = ref.read(databaseServiceProvider);
+      return await db.getActiveEnrollmentCountForUserId(userId);
     } catch (_) {
       return 0;
     }
@@ -991,33 +986,8 @@ class _AdminCustomerListScreenState
 
   Future<void> _loadCustomerDetails(String userId) async {
     try {
-      final supabase = Supabase.instance.client;
-
-      // Load enrollments with scheme data
-      final enrollmentsResponse = await supabase
-          .from('enrollments')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at', ascending: false);
-
-      final enrollments = List<Map<String, dynamic>>.from(enrollmentsResponse);
-
-      // Load schemes
-      final schemesResponse = await supabase.from('schemes').select();
-      final schemes = List<Map<String, dynamic>>.from(schemesResponse);
-      final schemeMap = <String, Map<String, dynamic>>{};
-      for (final s in schemes) {
-        final id = s['id']?.toString();
-        if (id != null) schemeMap[id] = s;
-      }
-
-      // Attach schemes to enrollments
-      for (final e in enrollments) {
-        final sid = e['scheme_id']?.toString();
-        if (sid != null && schemeMap.containsKey(sid)) {
-          e['schemes'] = schemeMap[sid];
-        }
-      }
+      final db = ref.read(databaseServiceProvider);
+      final enrollments = await db.getEnrollmentsForCustomer(userId);
 
       // Calculate portfolio
       double totalValue = 0;

@@ -1,7 +1,9 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+
+import '../../core/services/local_storage_service.dart';
+import 'convex_api.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> registerCustomer({
@@ -18,13 +20,11 @@ abstract class AuthRemoteDataSource {
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final SupabaseClient supabase;
+  AuthRemoteDataSourceImpl(this._storage);
 
-  AuthRemoteDataSourceImpl(this.supabase);
+  final LocalStorageService _storage;
 
   String _hashPin(String pin) {
-    // Basic SHA-256 hash for PIN (since bcrypt is heavy for client side)
-    // In production, recommend checking pin securely or sending encrypted.
     var bytes = utf8.encode(pin);
     var digest = sha256.convert(bytes);
     return digest.toString();
@@ -32,27 +32,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> loginCustomer(String email, String password) async {
-    final response = await supabase.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
-
-    if (response.user == null) {
-      throw Exception('Login failed');
-    }
-
-    final profileResponse = await supabase
-        .from('profiles')
-        .select()
-        .eq('id', response.user!.id)
-        .single();
-
-    return UserModel.fromJson(profileResponse);
+    final res = await convexAction('authActions:login', {
+      'email': email,
+      'password': password,
+    });
+    if (res is! Map) throw Exception('Invalid login response');
+    final resultMap = Map<String, dynamic>.from(res as Map);
+    final token = resultMap['token'];
+    if (token is! String) throw Exception('Invalid login response');
+    await _storage.saveAuthToken(token);
+    final profileData = resultMap['profile'];
+    if (profileData is! Map) throw Exception('Invalid login response');
+    final profile = Map<String, dynamic>.from(profileData as Map);
+    return UserModel.fromJson(profile);
   }
 
   @override
   Future<void> logout() async {
-    await supabase.auth.signOut();
+    final token = await _storage.getAuthToken();
+    if (token != null) {
+      try {
+        await convexMutation('auth:logout', {'sessionToken': token});
+      } catch (_) {}
+    }
+    await _storage.deleteAuthToken();
   }
 
   @override
@@ -62,59 +65,62 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required Map<String, dynamic> profileData,
     required String pin,
   }) async {
-    final response = await supabase.auth.signUp(
-      email: email,
-      password: password,
-    );
-
-    if (response.user == null) {
-      throw Exception('Registration failed');
-    }
-
-    // Add pinHash to profile data
-    profileData['id'] = response.user!.id;
-    profileData['pin_hash'] = _hashPin(pin);
-    profileData['pin_length'] = pin.length.toString();
-    profileData['role'] = 'customer';
-
-    // Use upsert because the auto-trigger may have already created a profile row
-    final profileResponse = await supabase
-        .from('profiles')
-        .upsert(profileData)
-        .select()
-        .single();
-
-    return UserModel.fromJson(profileResponse);
+    final res = await convexAction('authActions:register', {
+      'email': email,
+      'password': password,
+      'full_name': profileData['full_name'],
+      'username': profileData['username'],
+      'phone': profileData['phone'],
+      'aadhaar': profileData['aadhaar'],
+      'dob': profileData['dob'],
+      'gender': profileData['gender'],
+      'father_name': profileData['father_name'],
+      'birth_place': profileData['birth_place'],
+      'address': profileData['address'],
+      'nominee_name': profileData['nominee_name'],
+      'nominee_relationship': profileData['nominee_relationship'],
+      'pin_hash': _hashPin(pin),
+      'pin_length': pin.length.toString(),
+    });
+    if (res is! Map) throw Exception('Invalid registration response');
+    final resultMap = Map<String, dynamic>.from(res as Map);
+    final token = resultMap['token'];
+    if (token is! String) throw Exception('Invalid registration response');
+    await _storage.saveAuthToken(token);
+    final profile = resultMap['profile'];
+    if (profile is! Map) throw Exception('Invalid registration response');
+    return UserModel.fromJson(Map<String, dynamic>.from(profile as Map));
   }
 
   @override
   Future<bool> verifyPin(String pin) async {
-    final user = supabase.auth.currentUser;
+    final user = await getCurrentUser();
     if (user == null) throw Exception('Not logged in');
 
-    final profileResponse = await supabase
-        .from('profiles')
-        .select('pin_hash')
-        .eq('id', user.id)
-        .single();
+    final token = await _storage.getAuthToken();
+    if (token == null) throw Exception('Not logged in');
 
-    final storedHash = profileResponse['pin_hash'];
+    final data = await convexQuery('auth:getCurrentUser', {
+      'sessionToken': token,
+    });
+    if (data == null) return false;
+    final map = Map<String, dynamic>.from(data as Map);
+    final storedHash = map['pin_hash'];
     return storedHash == _hashPin(pin);
   }
 
   @override
   Future<UserModel?> getCurrentUser() async {
-    final session = supabase.auth.currentSession;
-    if (session == null) return null;
+    final token = await _storage.getAuthToken();
+    if (token == null) return null;
 
     try {
-      final profileResponse = await supabase
-          .from('profiles')
-          .select()
-          .eq('id', session.user.id)
-          .single();
-      return UserModel.fromJson(profileResponse);
-    } catch (e) {
+      final data = await convexQuery('auth:getCurrentUser', {
+        'sessionToken': token,
+      });
+      if (data == null) return null;
+      return UserModel.fromJson(Map<String, dynamic>.from(data as Map));
+    } catch (_) {
       return null;
     }
   }

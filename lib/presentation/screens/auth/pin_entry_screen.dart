@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
+import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/core/constants/app_dimensions.dart';
 import 'package:slg_golds/presentation/widgets/pin_pad_widget.dart';
 import 'package:slg_golds/core/services/biometric_service.dart';
@@ -45,22 +45,30 @@ class _PinEntryScreenState extends ConsumerState<PinEntryScreen> {
     setState(() => _isAuthenticating = true);
 
     try {
-      final supabase = Supabase.instance.client;
-      final user = supabase.auth.currentUser;
+      final user = ref.read(authNotifierProvider).user;
 
       if (user == null) {
         if (mounted) context.go('/auth/login');
         return;
       }
 
-      // Check user role from profiles
-      final profile = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
+      final ok = await ref
+          .read(authNotifierProvider.notifier)
+          .verifyPin(_pin);
+      if (!ok) {
+        if (mounted) {
+          setState(() => _pin = '');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Incorrect PIN'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
 
-      final role = profile?['role'] as String? ?? 'customer';
+      final role = user.role;
 
       if (mounted) {
         if (role == 'admin' || role == 'manager') {
