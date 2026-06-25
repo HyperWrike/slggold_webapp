@@ -7,6 +7,7 @@ import 'package:slg_golds/presentation/widgets/slg_button.dart';
 import 'package:slg_golds/presentation/widgets/slg_text_field.dart';
 import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:intl/intl.dart';
+import '../../../widgets/payment_handler.dart';
 
 class EnrollmentFlowScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? scheme;
@@ -52,22 +53,50 @@ class _EnrollmentFlowScreenState extends ConsumerState<EnrollmentFlowScreen> {
 
     try {
       final db = ref.read(databaseServiceProvider);
-      await db.createEnrollment(
+      final enrollmentId = await db.createEnrollment(
         userId: userId,
         schemeId: widget.scheme?['id'] ?? '',
         monthlyAmount: _monthlyAmount,
         tenureMonths: widget.scheme?['tenure_months'] as int? ?? 11,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Enrollment Successful!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        context.pop();
-      }
+      // Create Razorpay order on backend
+      final orderData = await db.createRazorpayOrder(
+        enrollmentId: enrollmentId,
+        amount: _monthlyAmount,
+      );
+
+      if (!mounted) return;
+
+      // Start the checkout process (launches SDK overlay or mock simulator sheet)
+      await PaymentHandler.startPayment(
+        context: context,
+        db: db,
+        orderData: orderData,
+        userPhone: authState.user?.phone ?? '',
+        userEmail: '${authState.user?.username ?? "customer"}@example.com',
+        onSuccess: () {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Enrollment & First Installment Successful!'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            context.pop();
+          }
+        },
+        onFailure: (errorMsg) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Payment failed: $errorMsg'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

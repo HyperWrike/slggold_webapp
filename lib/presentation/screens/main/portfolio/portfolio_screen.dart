@@ -9,6 +9,8 @@ import 'package:slg_golds/presentation/providers/metal_price_provider.dart';
 import 'package:slg_golds/presentation/widgets/notification_popup.dart';
 import 'package:intl/intl.dart';
 
+import '../../../widgets/payment_handler.dart';
+
 class PortfolioScreen extends ConsumerStatefulWidget {
   const PortfolioScreen({super.key});
 
@@ -18,6 +20,7 @@ class PortfolioScreen extends ConsumerStatefulWidget {
 
 class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
   final Set<String> _expandedCards = {};
+  String? _payingEnrollmentId;
   final formatCurrency = NumberFormat.simpleCurrency(
     locale: 'en_IN',
     decimalDigits: 0,
@@ -31,6 +34,82 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
         _expandedCards.add(enrollmentId);
       }
     });
+  }
+
+  Future<void> _payInstallment(
+    BuildContext context,
+    String enrollmentId,
+    double amount,
+  ) async {
+    final authState = ref.read(authNotifierProvider);
+    final userId = authState.user?.id;
+    if (userId == null) return;
+
+    final phone = authState.user?.phone ?? '';
+    final username = authState.user?.username ?? 'customer';
+
+    setState(() {
+      _payingEnrollmentId = enrollmentId;
+    });
+
+    try {
+      final db = ref.read(databaseServiceProvider);
+      // Create Razorpay order on backend
+      final orderData = await db.createRazorpayOrder(
+        enrollmentId: enrollmentId,
+        amount: amount,
+      );
+
+      if (!mounted) return;
+
+      // Start the checkout process (launches SDK overlay or mock simulator sheet)
+      await PaymentHandler.startPayment(
+        context: context,
+        db: db,
+        orderData: orderData,
+        userPhone: phone,
+        userEmail: '$username@example.com',
+        onSuccess: () {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Installment Payment Successful!'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            // Refresh data queries to update portfolio stats and graphs
+            ref.invalidate(userEnrollmentsProvider(userId));
+            ref.invalidate(portfolioSummaryProvider(userId));
+            ref.invalidate(userTransactionsProvider(userId));
+          }
+        },
+        onFailure: (errorMsg) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Payment failed: $errorMsg'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to initiate payment: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _payingEnrollmentId = null;
+        });
+      }
+    }
   }
 
   @override
@@ -788,6 +867,50 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
 
             // Payment Timeline
             _buildPaymentTimeline(paidMonths, tenureMonths),
+
+            if (isActive && paidMonths < tenureMonths)
+              Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+                child: _payingEnrollmentId == enrollmentId
+                    ? const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
+                    : SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () => _payInstallment(
+                            context,
+                            enrollmentId,
+                            monthlyAmount,
+                          ),
+                          child: Text(
+                            'PAY INSTALLMENT (${formatCurrency.format(monthlyAmount)})',
+                            style: const TextStyle(
+                              fontFamily: 'DM Sans',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
           ],
         ],
       ),

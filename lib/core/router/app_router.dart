@@ -158,8 +158,10 @@ final appRouter = GoRouter(
             GoRoute(
               path: 'enroll',
               parentNavigatorKey: _rootNavigatorKey,
-              builder: (context, state) =>
-                  const real_enrollment.EnrollmentFlowScreen(),
+              builder: (context, state) {
+                final scheme = state.extra as Map<String, dynamic>?;
+                return real_enrollment.EnrollmentFlowScreen(scheme: scheme);
+              },
             ),
           ],
         ),

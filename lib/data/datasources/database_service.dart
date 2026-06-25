@@ -99,7 +99,7 @@ class DatabaseService {
     'todayTxnCount': 0,
   };
 
-  Future<void> createEnrollment({
+  Future<String> createEnrollment({
     required String userId,
     required String schemeId,
     required double monthlyAmount,
@@ -107,12 +107,16 @@ class DatabaseService {
   }) async {
     final token = await _sessionToken();
     if (token == null) throw Exception('Not signed in');
-    await convexMutation('enrollments:create', {
+    final result = await convexMutation('enrollments:create', {
       'sessionToken': token,
       'schemeId': schemeId,
       'monthlyAmount': monthlyAmount,
       'tenureMonths': tenureMonths,
     });
+    if (result is Map && result['id'] != null) {
+      return result['id'].toString();
+    }
+    throw Exception('Failed to create enrollment: no ID returned.');
   }
 
   Future<void> createScheme({
@@ -436,6 +440,44 @@ class DatabaseService {
       'silver_gst': silverGst,
       'making_charges_gst': makingChargesGst,
     });
+  }
+
+  Future<Map<String, dynamic>> createRazorpayOrder({
+    required String enrollmentId,
+    required double amount,
+  }) async {
+    final token = await _sessionToken();
+    if (token == null) throw Exception('Not signed in');
+    final data = await convexAction('payments:createOrder', {
+      'sessionToken': token,
+      'enrollmentId': enrollmentId,
+      'amount': amount,
+    });
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  Future<bool> verifyRazorpayPayment({
+    required String orderId,
+    required String paymentId,
+    required String signature,
+  }) async {
+    try {
+      final token = await _sessionToken();
+      if (token == null) throw Exception('Not signed in');
+      final data = await convexAction('payments:verifyPayment', {
+        'sessionToken': token,
+        'razorpayOrderId': orderId,
+        'razorpayPaymentId': paymentId,
+        'razorpaySignature': signature,
+      });
+      if (data is Map && data['ok'] == true) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error verifying Razorpay payment: $e');
+      return false;
+    }
   }
 }
 

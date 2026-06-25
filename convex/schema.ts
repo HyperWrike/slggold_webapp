@@ -88,6 +88,9 @@ export default defineSchema({
     gold_grams: v.optional(v.number()),
     silver_grams: v.optional(v.number()),
     description: v.optional(v.string()),
+    razorpay_order_id: v.optional(v.string()),
+    razorpay_payment_id: v.optional(v.string()),
+    razorpay_signature: v.optional(v.string()),
     status: v.optional(
       v.union(
         v.literal("completed"),
@@ -100,7 +103,8 @@ export default defineSchema({
   })
     .index("by_user", ["user_id"])
     .index("by_enrollment", ["enrollment_id"])
-    .index("by_created", ["created_at"]),
+    .index("by_created", ["created_at"])
+    .index("by_order_id", ["razorpay_order_id"]),
 
   metal_prices: defineTable({
     gold_price: v.number(),

@@ -82,7 +82,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireUser(ctx, args.sessionToken);
-    await ctx.db.insert("enrollments", {
+    const id = await ctx.db.insert("enrollments", {
       user_id: userId,
       scheme_id: args.schemeId,
       monthly_amount: args.monthlyAmount,
@@ -92,8 +92,7 @@ export const create = mutation({
       paid_amount: 0,
       status: "active",
       created_at: new Date().toISOString(),
-    });
-    return { ok: true };
+    return { ok: true, id: String(id) };
   },
 });
 
