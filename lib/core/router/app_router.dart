@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../convex_launch_state.dart';
+import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/screens/dummy_screens.dart';
 import '../../presentation/screens/setup/convex_setup_screen.dart';
 import '../../presentation/screens/onboarding/splash_screen.dart'
@@ -60,15 +62,33 @@ final appRouter = GoRouter(
   initialLocation: '/splash',
   redirect: (context, state) {
     final path = state.uri.path;
+
     if (!ConvexLaunchState.isReady) {
-      if (path != '/convex-setup') {
-        return '/convex-setup';
-      }
+      if (path != '/convex-setup') return '/convex-setup';
       return null;
     }
-    if (path == '/convex-setup') {
-      return '/splash';
+    if (path == '/convex-setup') return '/splash';
+
+    final container = ProviderScope.containerOf(context, listen: false);
+    final authState = container.read(authNotifierProvider);
+    final isLoggedIn = authState.user != null;
+    final role = authState.user?.role;
+
+    final publicPaths = [
+      '/splash',
+      '/auth/login',
+      '/auth/pin-entry',
+      '/onboarding',
+    ];
+    final isPublic = publicPaths.any((p) => path.startsWith(p));
+
+    if (!isLoggedIn && !isPublic) return '/auth/login';
+    if (isLoggedIn && (path == '/auth/login' || path == '/splash')) {
+      return '/home';
     }
+
+    if (path.startsWith('/admin') && role != 'admin') return '/home';
+
     return null;
   },
   routes: [
@@ -101,13 +121,13 @@ final appRouter = GoRouter(
       path: '/onboarding/register/step4',
       builder: (context, state) => const RegistrationStep4Screen(),
     ),
-    GoRoute(
-      path: '/onboarding/verify-otp',
-      builder: (context, state) {
-        final phone = state.extra as String? ?? '';
-        return OtpVerificationScreen(phoneNumber: phone);
-      },
-    ),
+GoRoute(
+  path: '/onboarding/verify-otp',
+  builder: (context, state) {
+    final email = state.extra as String? ?? '';
+    return OtpVerificationScreen(email: email);
+  },
+),
     GoRoute(
       path: '/onboarding/register',
       redirect: (context, state) => '/onboarding/register/step1',

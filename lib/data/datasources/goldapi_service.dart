@@ -16,13 +16,18 @@ class MetalPrices {
 }
 
 class GoldApiService {
-  static const String _apiKey = 'goldapi-ihulsmnh6rrwa-io';
   static const String _baseUrl = 'https://www.goldapi.io/api';
 
   static const double _fallbackGoldPrice = 8500.0;
   static const double _fallbackSilverPrice = 95.0;
 
+  String get _apiKey => const String.fromEnvironment(
+        'GOLDAPI_KEY',
+        defaultValue: '',
+      );
+
   Future<double> _fetchGoldFromApi() async {
+    if (_apiKey.isEmpty) return _fallbackGoldPrice;
     try {
       final client = http.Client();
       final response = await client
@@ -43,6 +48,7 @@ class GoldApiService {
   }
 
   Future<double> _fetchSilverFromApi() async {
+    if (_apiKey.isEmpty) return _fallbackSilverPrice;
     try {
       final client = http.Client();
       final response = await client

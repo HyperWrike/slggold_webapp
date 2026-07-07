@@ -21,12 +21,14 @@ class _RegistrationStep2ScreenState
   final _addressController = TextEditingController();
   final _aadhaarController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
 
   @override
   void dispose() {
     _addressController.dispose();
     _aadhaarController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -38,9 +40,10 @@ class _RegistrationStep2ScreenState
             address: _addressController.text,
             aadhaar: _aadhaarController.text,
             phone: _phoneController.text,
+            email: _emailController.text,
           );
-      // Navigate to OTP verification with phone number
-      context.push('/onboarding/verify-otp', extra: _phoneController.text);
+      // Navigate to OTP verification with email
+      context.push('/onboarding/verify-otp', extra: _emailController.text);
     }
   }
 
@@ -112,6 +115,25 @@ class _RegistrationStep2ScreenState
                     if (value == null || value.isEmpty)
                       return 'Aadhaar is required';
                     if (value.length != 12) return 'Aadhaar must be 12 digits';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppDimensions.p20),
+
+                SlgTextField(
+                  label: 'Email Address',
+                  hint: 'Enter your email',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  prefixIcon: const Icon(
+                    Icons.email_outlined,
+                    color: AppColors.goldPrimary,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty)
+                      return 'Email is required';
+                    if (!value.contains('@') || !value.contains('.'))
+                      return 'Enter a valid email';
                     return null;
                   },
                 ),

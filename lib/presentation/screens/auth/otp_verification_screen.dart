@@ -8,8 +8,8 @@ import 'package:slg_golds/core/services/otp_service.dart';
 import 'package:slg_golds/presentation/widgets/slg_button.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
-  final String phoneNumber;
-  const OtpVerificationScreen({super.key, required this.phoneNumber});
+  final String email;
+  const OtpVerificationScreen({super.key, required this.email});
 
   @override
   ConsumerState<OtpVerificationScreen> createState() =>
@@ -74,8 +74,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     final otp = _otpService.generateOtp();
     _generatedOtp = otp;
 
-    // Send via SMS service
-    final result = await _otpService.sendOtp(widget.phoneNumber, otp);
+    // Send via Brevo email service
+    final result = await _otpService.sendOtp(widget.email, otp);
 
     if (mounted) {
       setState(() {
@@ -98,10 +98,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
       if (result.success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP sent to your phone'),
-            backgroundColor: Color(0xFF059669),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('OTP sent to ${widget.email}'),
+            backgroundColor: const Color(0xFF059669),
+            duration: const Duration(seconds: 2),
           ),
         );
       } else {
@@ -176,14 +176,16 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final maskedPhone = widget.phoneNumber.length >= 5
-        ? 'XXXXX${widget.phoneNumber.substring(widget.phoneNumber.length - 5)}'
-        : widget.phoneNumber;
+    final maskedEmail = widget.email.replaceRange(
+      widget.email.indexOf('@') > 2 ? 2 : 0,
+      widget.email.indexOf('@'),
+      '****',
+    );
 
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('Verify Phone'),
+        title: const Text('Verify Email'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -218,22 +220,22 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               const SizedBox(height: AppDimensions.p32),
 
               const Icon(
-                Icons.sms_outlined,
+                Icons.email_outlined,
                 size: 64,
                 color: AppColors.goldPrimary,
               ),
               const SizedBox(height: AppDimensions.p24),
 
               Text(
-                'Verify Your Number',
+                'Verify Your Email',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               const SizedBox(height: AppDimensions.p8),
               Text(
                 _otpSent
-                    ? 'We sent a 6-digit code to +91 $maskedPhone'
-                    : 'Sending OTP to +91 ${widget.phoneNumber}...',
+                    ? 'We sent a 6-digit code to $maskedEmail'
+                    : 'Sending OTP to ${widget.email}...',
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,
@@ -397,12 +399,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 ),
               const SizedBox(height: AppDimensions.p16),
 
-              // Change phone number
+              // Change email
               Center(
                 child: TextButton(
                   onPressed: () => context.pop(),
                   child: const Text(
-                    'Change Phone Number',
+                    'Change Email',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,

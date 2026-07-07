@@ -61,6 +61,7 @@ class _RegistrationStep4ScreenState
             .register(
               fullName: regData.fullName,
               username: _usernameController.text,
+              email: regData.email,
               password: _passwordController.text,
               phone: regData.phone,
               aadhaar: regData.aadhaar,

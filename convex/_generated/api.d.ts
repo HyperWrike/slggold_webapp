@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as authActions from "../authActions.js";
+import type * as emailService from "../emailService.js";
 import type * as enrollments from "../enrollments.js";
 import type * as gst from "../gst.js";
 import type * as health from "../health.js";
@@ -28,6 +29,7 @@ import type * as payments from "../payments.js";
 import type * as portfolio from "../portfolio.js";
 import type * as schemes from "../schemes.js";
 import type * as seed from "../seed.js";
+import type * as testEnv from "../testEnv.js";
 import type * as transactions from "../transactions.js";
 
 import type {
@@ -40,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   auth: typeof auth;
   authActions: typeof authActions;
+  emailService: typeof emailService;
   enrollments: typeof enrollments;
   gst: typeof gst;
   health: typeof health;
@@ -57,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   portfolio: typeof portfolio;
   schemes: typeof schemes;
   seed: typeof seed;
+  testEnv: typeof testEnv;
   transactions: typeof transactions;
 }>;
 

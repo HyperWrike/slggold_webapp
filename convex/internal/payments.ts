@@ -43,7 +43,7 @@ export const completeTransaction = internalMutation({
       return { ok: false, error: "Transaction not found" };
     }
     if (txn.status !== "pending") {
-      return { ok: false, error: "Transaction is already processed" };
+      return { ok: true }; // Idempotent — already completed
     }
 
     const enrollmentId = txn.enrollment_id;
@@ -57,12 +57,11 @@ export const completeTransaction = internalMutation({
     }
 
     // Retrieve latest gold price per gram
-    const priceRows = await ctx.db.query("metal_prices").collect();
-    priceRows.sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
-    let goldPrice = priceRows[0]?.gold_price ?? 7850;
+    const latestPrice = await ctx.db
+      .query("metal_prices")
+      .order("desc")
+      .first();
+    let goldPrice = latestPrice?.gold_price ?? 7850;
     if (goldPrice <= 0) goldPrice = 7850;
 
     // Calculate GST (Standard Gold GST in India is 3%)

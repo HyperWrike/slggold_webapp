@@ -4,7 +4,6 @@ class ConvexEnv {
 
   static const String deploymentUrl = String.fromEnvironment(
     'CONVEX_URL',
-    defaultValue: 'https://patient-cobra-66.convex.cloud',
   );
 
   /// True when [deploymentUrl] looks like a real Convex deployment URL.

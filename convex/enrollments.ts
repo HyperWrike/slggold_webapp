@@ -92,6 +92,7 @@ export const create = mutation({
       paid_amount: 0,
       status: "active",
       created_at: new Date().toISOString(),
+    });
     return { ok: true, id: String(id) };
   },
 });

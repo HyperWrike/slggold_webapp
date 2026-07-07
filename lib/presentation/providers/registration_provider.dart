@@ -9,6 +9,7 @@ class RegistrationData {
   String address;
   String aadhaar;
   String phone;
+  String email;
   String nomineeName;
   String nomineeRelationship;
   String username;
@@ -24,6 +25,7 @@ class RegistrationData {
     this.address = '',
     this.aadhaar = '',
     this.phone = '',
+    this.email = '',
     this.nomineeName = '',
     this.nomineeRelationship = '',
     this.username = '',
@@ -40,6 +42,7 @@ class RegistrationData {
     String? address,
     String? aadhaar,
     String? phone,
+    String? email,
     String? nomineeName,
     String? nomineeRelationship,
     String? username,
@@ -55,6 +58,7 @@ class RegistrationData {
       address: address ?? this.address,
       aadhaar: aadhaar ?? this.aadhaar,
       phone: phone ?? this.phone,
+      email: email ?? this.email,
       nomineeName: nomineeName ?? this.nomineeName,
       nomineeRelationship: nomineeRelationship ?? this.nomineeRelationship,
       username: username ?? this.username,
@@ -83,8 +87,8 @@ class RegistrationNotifier extends StateNotifier<RegistrationData> {
     );
   }
 
-  void updateStep2({String? address, String? aadhaar, String? phone}) {
-    state = state.copyWith(address: address, aadhaar: aadhaar, phone: phone);
+  void updateStep2({String? address, String? aadhaar, String? phone, String? email}) {
+    state = state.copyWith(address: address, aadhaar: aadhaar, phone: phone, email: email);
   }
 
   void updateStep3({String? nomineeName, String? nomineeRelationship}) {

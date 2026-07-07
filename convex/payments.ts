@@ -3,7 +3,7 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { createHmac, randomBytes } from "crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 // Razorpay credentials from environment variables
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
@@ -42,7 +42,15 @@ export const createOrder = action({
       throw new Error("Invalid enrollment");
     }
 
-    // 3️⃣ Create Razorpay order (or mock order)
+    // 3️⃣ Server-side amount validation
+    if (args.amount < 100) {
+      throw new Error("Amount below minimum (₹100)");
+    }
+    if (args.amount > 100000) {
+      throw new Error("Amount exceeds maximum (₹1,00,000)");
+    }
+
+    // 4️⃣ Create Razorpay order (or mock order)
     let orderId: string;
     if (isMockMode) {
       orderId = "order_mock_" + randomBytes(8).toString("hex");
@@ -127,9 +135,13 @@ export const verifyPayment = action({
       const hmac = createHmac("sha256", RAZORPAY_KEY_SECRET!);
       hmac.update(`${args.razorpayOrderId}|${args.razorpayPaymentId}`);
       const expected = hmac.digest("hex");
-      verified = expected === args.razorpaySignature;
+      const expectedBuf = Buffer.from(expected, "hex");
+      const actualBuf = Buffer.from(args.razorpaySignature, "hex");
+      verified =
+        expectedBuf.length === actualBuf.length &&
+        timingSafeEqual(expectedBuf, actualBuf);
       if (!verified) {
-        console.warn(`[Payments] Signature mismatch (expected ${expected})`);
+        console.warn("[Payments] Signature mismatch");
       }
     }
     if (!verified) throw new Error("Payment signature verification failed");

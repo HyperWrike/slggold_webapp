@@ -1,8 +1,8 @@
-import { mutation, action } from "./_generated/server";
+import { mutation, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import bcrypt from "bcryptjs";
 
-export const resetAdmin = action({
+export const resetAdmin = internalAction({
   args: {},
   handler: async (ctx) => {
     // Delete existing admin if any

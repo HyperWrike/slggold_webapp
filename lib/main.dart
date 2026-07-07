@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:convex_flutter/convex_flutter.dart';
 
@@ -12,7 +13,9 @@ import 'data/datasources/convex_api.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  usePathUrlStrategy();
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   ConvexLaunchState.initError = null;
   ConvexLaunchState.isReady = false;
@@ -27,9 +30,6 @@ void main() async {
         ),
       );
       ConvexLaunchState.isReady = true;
-
-      // Seed default admin if not exists (fire-and-forget)
-      convexAction('seed:resetAdmin', {}).catchError((_) {});
     } catch (e, st) {
       debugPrint('ConvexClient.initialize failed: $e\n$st');
       ConvexLaunchState.initError = e.toString();

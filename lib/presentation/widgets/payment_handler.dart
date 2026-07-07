@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +22,7 @@ class PaymentHandler {
     final orderId = orderData['orderId'] as String;
     final key = orderData['key'] as String;
 
-    if (isMock) {
+    if (isMock && kDebugMode) {
       // Launch premium custom simulated sandbox sheet
       if (!context.mounted) return;
       showModalBottomSheet(

@@ -46,6 +46,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> register({
     required String fullName,
     required String username,
+    required String email,
     required String password,
     required String phone,
     required String aadhaar,
@@ -59,8 +60,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String pin,
   }) async {
     try {
-      final email = '$username@slggolds.com';
-
       final profileData = {
         'full_name': fullName,
         'username': username,

@@ -11,6 +11,7 @@ class RegisterUseCase {
   Future<Either<Failure, UserEntity>> call({
     required String fullName,
     required String username,
+    required String email,
     required String password,
     required String phone,
     required String aadhaar,
@@ -26,6 +27,7 @@ class RegisterUseCase {
     return await repository.register(
       fullName: fullName,
       username: username,
+      email: email,
       password: password,
       phone: phone,
       aadhaar: aadhaar,

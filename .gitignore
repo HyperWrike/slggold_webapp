@@ -49,3 +49,7 @@ node_modules/
 .convex/
 
 .env.local
+
+# Android signing
+*.jks
+*.keystore

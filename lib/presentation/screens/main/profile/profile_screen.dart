@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:slg_golds/core/constants/app_colors.dart';
 import 'package:slg_golds/presentation/providers/auth_provider.dart';
 import 'package:slg_golds/presentation/providers/user_data_provider.dart';
@@ -68,6 +69,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 16),
                   _buildDetailsSection(context, profileAsync),
                   _buildSettingsSection(context),
+                  _buildLegalSection(context),
                   _buildSignOutButton(context, ref),
                   const SizedBox(height: 120),
                 ],
@@ -810,6 +812,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildLegalSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 32),
+          const Text(
+            'Legal',
+            style: TextStyle(
+              fontFamily: 'Cormorant Garamond',
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0x0A795900),
+                  blurRadius: 32,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                _buildSettingsItem(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Privacy Policy',
+                  isToggle: false,
+                  onTap: () => _openUrl('https://slggolds.com/privacy-policy'),
+                ),
+                _buildDivider(),
+                _buildSettingsItem(
+                  icon: Icons.description_outlined,
+                  title: 'Terms of Service',
+                  isToggle: false,
+                  onTap: () => _openUrl('https://slggolds.com/terms-of-service'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Widget _buildSignOutButton(BuildContext context, WidgetRef ref) {
