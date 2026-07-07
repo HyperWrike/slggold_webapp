@@ -9,7 +9,6 @@
  */
 
 import type * as admin from "../admin.js";
-import type * as auth from "../auth.js";
 import type * as authActions from "../authActions.js";
 import type * as emailService from "../emailService.js";
 import type * as enrollments from "../enrollments.js";
@@ -22,6 +21,7 @@ import type * as internal_profiles from "../internal/profiles.js";
 import type * as internal_sessions from "../internal/sessions.js";
 import type * as internal_sessionsLookup from "../internal/sessionsLookup.js";
 import type * as lib_authHelpers from "../lib/authHelpers.js";
+import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_serialize from "../lib/serialize.js";
 import type * as metalPrices from "../metalPrices.js";
 import type * as notifications from "../notifications.js";
@@ -40,7 +40,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
-  auth: typeof auth;
   authActions: typeof authActions;
   emailService: typeof emailService;
   enrollments: typeof enrollments;
@@ -53,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   "internal/sessions": typeof internal_sessions;
   "internal/sessionsLookup": typeof internal_sessionsLookup;
   "lib/authHelpers": typeof lib_authHelpers;
+  "lib/crypto": typeof lib_crypto;
   "lib/serialize": typeof lib_serialize;
   metalPrices: typeof metalPrices;
   notifications: typeof notifications;

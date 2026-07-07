@@ -43,7 +43,7 @@ export const completeTransaction = internalMutation({
       return { ok: false, error: "Transaction not found" };
     }
     if (txn.status !== "pending") {
-      return { ok: true }; // Idempotent — already completed
+      return { ok: true };
     }
 
     const enrollmentId = txn.enrollment_id;
@@ -56,20 +56,38 @@ export const completeTransaction = internalMutation({
       return { ok: false, error: "Enrollment not found" };
     }
 
-    // Retrieve latest gold price per gram
-    const latestPrice = await ctx.db
-      .query("metal_prices")
-      .order("desc")
-      .first();
+    // Retrieve latest gold price
+    const latestPrice = await ctx.db.query("metal_prices").order("desc").first();
     let goldPrice = latestPrice?.gold_price ?? 7850;
     if (goldPrice <= 0) goldPrice = 7850;
 
-    // Calculate GST (Standard Gold GST in India is 3%)
-    const netAmount = txn.amount / 1.03;
+    // Retrieve latest GST rates
+    const latestGst = await ctx.db.query("gst_rates").order("desc").first();
+    const goldGstRate = latestGst?.gold_gst ?? 3;
+    const gstMultiplier = 1 + goldGstRate / 100;
+
+    const scheme = enr.scheme_id ? await ctx.db.get(enr.scheme_id) : null;
+    const metalType = scheme?.metal_type ?? "gold";
+
+    // Calculate GST
+    const netAmount = txn.amount / gstMultiplier;
     const gstAmount = txn.amount - netAmount;
 
-    // Calculate Gold Grams
-    const goldGrams = netAmount / goldPrice;
+    let goldGrams = 0;
+    let silverGrams = 0;
+
+    if (metalType === "silver") {
+      let silverPrice = latestPrice?.silver_price ?? 7850;
+      if (silverPrice <= 0) silverPrice = 7850;
+      silverGrams = netAmount / silverPrice;
+    } else if (metalType === "combo") {
+      goldGrams = (netAmount * 0.5) / goldPrice;
+      let silverPrice = latestPrice?.silver_price ?? 7850;
+      if (silverPrice <= 0) silverPrice = 7850;
+      silverGrams = (netAmount * 0.5) / silverPrice;
+    } else {
+      goldGrams = netAmount / goldPrice;
+    }
 
     // Update Transaction
     await ctx.db.patch(transactionId, {
@@ -77,6 +95,7 @@ export const completeTransaction = internalMutation({
       net_amount: netAmount,
       gst: gstAmount,
       gold_grams: goldGrams,
+      silver_grams: silverGrams,
       razorpay_payment_id: paymentId,
       razorpay_signature: signature,
     });
@@ -85,6 +104,7 @@ export const completeTransaction = internalMutation({
     const newPaidMonths = (enr.paid_months ?? 0) + 1;
     const newPaidAmount = (enr.paid_amount ?? 0) + txn.amount;
     const newTotalGold = (enr.total_gold_grams ?? 0) + goldGrams;
+    const newTotalSilver = (enr.total_silver_grams ?? 0) + silverGrams;
 
     const isCompleted = newPaidMonths >= enr.tenure_months;
 
@@ -92,6 +112,7 @@ export const completeTransaction = internalMutation({
       paid_months: newPaidMonths,
       paid_amount: newPaidAmount,
       total_gold_grams: newTotalGold,
+      total_silver_grams: newTotalSilver,
       status: isCompleted ? "completed" : enr.status,
       updated_at: new Date().toISOString(),
     });

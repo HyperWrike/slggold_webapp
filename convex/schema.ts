@@ -24,6 +24,7 @@ export default defineSchema({
       v.literal("manager"),
     ),
     is_verified: v.optional(v.boolean()),
+    fcm_token: v.optional(v.string()),
     created_at: v.string(),
     updated_at: v.optional(v.string()),
   })
@@ -64,6 +65,7 @@ export default defineSchema({
     tenure_months: v.number(),
     paid_months: v.optional(v.number()),
     total_gold_grams: v.optional(v.number()),
+    total_silver_grams: v.optional(v.number()),
     paid_amount: v.optional(v.number()),
     status: v.union(
       v.literal("active"),
@@ -137,4 +139,12 @@ export default defineSchema({
     making_charges_gst: v.number(),
     created_at: v.string(),
   }),
+
+  rate_limits: defineTable({
+    email: v.string(),
+    action: v.string(),
+    count: v.number(),
+    window_start: v.number(),
+  })
+    .index("by_email_action", ["email", "action"]),
 });

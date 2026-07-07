@@ -3,9 +3,7 @@ import { v } from "convex/values";
 
 /**
  * Internal queries and mutations for authentication.
- * These are private functions that can only be called by other Convex functions.
  */
-
 export const profileByEmail = internalQuery({
   args: { email: v.string() },
   handler: async (ctx, { email }) => {
@@ -105,5 +103,59 @@ export const deleteProfile = internalMutation({
   args: { id: v.id("profiles") },
   handler: async (ctx, { id }) => {
     await ctx.db.delete(id);
+  },
+});
+
+// Rate limiting helpers
+
+export const getRateLimit = internalQuery({
+  args: { email: v.string(), action: v.string() },
+  handler: async (ctx, { email, action }) => {
+    return await ctx.db
+      .query("rate_limits")
+      .withIndex("by_email_action", (q) =>
+        q.eq("email", email).eq("action", action),
+      )
+      .unique();
+  },
+});
+
+export const setRateLimit = internalMutation({
+  args: {
+    email: v.string(),
+    action: v.string(),
+    count: v.number(),
+    window_start: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("rate_limits")
+      .withIndex("by_email_action", (q) =>
+        q.eq("email", args.email).eq("action", args.action),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        count: args.count,
+        window_start: args.window_start,
+      });
+    } else {
+      await ctx.db.insert("rate_limits", args);
+    }
+  },
+});
+
+export const incrementRateLimit = internalMutation({
+  args: { email: v.string(), action: v.string() },
+  handler: async (ctx, { email, action }) => {
+    const existing = await ctx.db
+      .query("rate_limits")
+      .withIndex("by_email_action", (q) =>
+        q.eq("email", email).eq("action", action),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { count: existing.count + 1 });
+    }
   },
 });

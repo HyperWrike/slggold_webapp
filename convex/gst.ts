@@ -4,9 +4,8 @@ import { docWithId } from "./lib/serialize";
 import { requireAdmin } from "./lib/authHelpers";
 
 export const latest = query({
-  args: { sessionToken: v.string() },
-  handler: async (ctx, { sessionToken }) => {
-    await requireAdmin(ctx, sessionToken);
+  args: { sessionToken: v.optional(v.string()) },
+  handler: async (ctx) => {
     const rows = await ctx.db.query("gst_rates").collect();
     if (rows.length === 0) return null;
     rows.sort(
