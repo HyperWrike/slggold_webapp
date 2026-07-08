@@ -50,6 +50,7 @@ export const insertProfile = internalMutation({
     pin_length: v.optional(v.string()),
     role: v.union(v.literal("customer"), v.literal("admin"), v.literal("manager")),
     created_at: v.string(),
+    is_verified: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("profiles", {
@@ -69,7 +70,7 @@ export const insertProfile = internalMutation({
       pin_hash: args.pin_hash,
       pin_length: args.pin_length,
       role: args.role,
-      is_verified: false,
+      is_verified: args.is_verified ?? false,
       created_at: args.created_at,
     });
   },

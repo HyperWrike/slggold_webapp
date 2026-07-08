@@ -33,3 +33,18 @@ export const removeAllForUser = internalMutation({
     for (const r of rows) await ctx.db.delete(r._id);
   },
 });
+
+export const purgeExpiredSessions = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const expired = await ctx.db
+      .query("sessions")
+      .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
+      .take(100);
+    for (const s of expired) {
+      await ctx.db.delete(s._id);
+    }
+    return { purgedCount: expired.length };
+  },
+});

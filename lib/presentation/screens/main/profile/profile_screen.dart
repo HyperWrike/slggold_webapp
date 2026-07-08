@@ -849,14 +849,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   icon: Icons.privacy_tip_outlined,
                   title: 'Privacy Policy',
                   isToggle: false,
-                  onTap: () => _openUrl('https://slggolds.com/privacy-policy'),
+                  onTap: () {
+                    const convexUrl = String.fromEnvironment('CONVEX_URL');
+                    final baseUrl = (convexUrl.contains('127.0.0.1') || convexUrl.contains('localhost'))
+                        ? convexUrl.replaceAll('3210', '3211')
+                        : convexUrl.replaceAll('.cloud', '.site');
+                    _openUrl('$baseUrl/privacy-policy');
+                  },
                 ),
                 _buildDivider(),
                 _buildSettingsItem(
                   icon: Icons.description_outlined,
                   title: 'Terms of Service',
                   isToggle: false,
-                  onTap: () => _openUrl('https://slggolds.com/terms-of-service'),
+                  onTap: () {
+                    const convexUrl = String.fromEnvironment('CONVEX_URL');
+                    final baseUrl = (convexUrl.contains('127.0.0.1') || convexUrl.contains('localhost'))
+                        ? convexUrl.replaceAll('3210', '3211')
+                        : convexUrl.replaceAll('.cloud', '.site');
+                    _openUrl('$baseUrl/terms-of-service');
+                  },
                 ),
               ],
             ),

@@ -10,10 +10,12 @@
 
 import type * as admin from "../admin.js";
 import type * as authActions from "../authActions.js";
+import type * as crons from "../crons.js";
 import type * as emailService from "../emailService.js";
 import type * as enrollments from "../enrollments.js";
 import type * as gst from "../gst.js";
 import type * as health from "../health.js";
+import type * as http from "../http.js";
 import type * as internal_authHelpers from "../internal/authHelpers.js";
 import type * as internal_emailLookup from "../internal/emailLookup.js";
 import type * as internal_payments from "../internal/payments.js";
@@ -41,10 +43,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   authActions: typeof authActions;
+  crons: typeof crons;
   emailService: typeof emailService;
   enrollments: typeof enrollments;
   gst: typeof gst;
   health: typeof health;
+  http: typeof http;
   "internal/authHelpers": typeof internal_authHelpers;
   "internal/emailLookup": typeof internal_emailLookup;
   "internal/payments": typeof internal_payments;

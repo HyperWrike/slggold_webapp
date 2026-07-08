@@ -374,7 +374,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                             '₹${NumberFormat('#,##0.00', 'en_IN').format(netAmount)}',
                           ),
                           _buildDetailItem(
-                            'GST (3%)',
+                            'GST (${(netAmount > 0 ? (gst / netAmount * 100) : 3.0).toStringAsFixed(0)}%)',
                             '₹${NumberFormat('#,##0.00', 'en_IN').format(gst)}',
                             alignEnd: true,
                           ),

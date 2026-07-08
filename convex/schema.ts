@@ -37,7 +37,8 @@ export default defineSchema({
     expiresAt: v.number(),
   })
     .index("by_token", ["token"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_expiresAt", ["expiresAt"]),
 
   schemes: defineTable({
     name: v.string(),
@@ -131,7 +132,9 @@ export default defineSchema({
     is_read: v.optional(v.boolean()),
     is_global: v.optional(v.boolean()),
     created_at: v.string(),
-  }).index("by_user", ["user_id"]),
+  })
+    .index("by_user", ["user_id"])
+    .index("by_global", ["is_global"]),
 
   gst_rates: defineTable({
     gold_gst: v.number(),

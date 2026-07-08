@@ -120,6 +120,7 @@ export const register = action({
         pin_length: args.pin_length,
         role: "customer",
         created_at: now,
+        is_verified: true,
       },
     );
 
@@ -177,6 +178,9 @@ export const login = action({
       internal.internal.authHelpers.profileById,
       { id: profile._id },
     );
+    if (fresh && fresh.role === "customer" && fresh.is_verified !== true) {
+      throw new Error("Your email address is not verified. Please complete email verification.");
+    }
     return { token, profile: publicProfile(fresh!) };
   },
 });

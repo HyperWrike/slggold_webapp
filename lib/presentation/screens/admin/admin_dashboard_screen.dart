@@ -82,6 +82,85 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF1C1917),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFF5C842), Color(0xFFC8860A)],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: const [
+                  Text(
+                    'SLG Golds',
+                    style: TextStyle(
+                      fontFamily: 'Cormorant Garamond',
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'ADMIN PORTAL',
+                    style: TextStyle(
+                      fontFamily: 'DM Mono',
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.dashboard, color: AppColors.primary),
+              title: const Text('Dashboard', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.people, color: AppColors.primary),
+              title: const Text('Customers', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/admin/customers');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.assessment, color: AppColors.primary),
+              title: const Text('Reports', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/admin/reports');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings, color: AppColors.primary),
+              title: const Text('GST Settings', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/admin/gst');
+              },
+            ),
+            const Divider(color: Colors.white24),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.redAccent),
+              title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(authNotifierProvider.notifier).logout();
+                context.go('/login');
+              },
+            ),
+          ],
+        ),
+      ),
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: _loadData,
@@ -345,12 +424,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          // Drawer or menu
-                        },
-                        icon: const Icon(Icons.menu, color: Color(0xFF1E3A5F)),
-                        splashRadius: 24,
+                      Builder(
+                        builder: (context) {
+                          return IconButton(
+                            onPressed: () {
+                              Scaffold.of(context).openDrawer();
+                            },
+                            icon: const Icon(Icons.menu, color: Color(0xFF1E3A5F)),
+                            splashRadius: 24,
+                          );
+                        }
                       ),
                       const SizedBox(width: 8),
                       const Text(
@@ -361,6 +444,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF1E3A5F),
                         ),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        onPressed: () => _showBroadcastNotificationDialog(context),
+                        icon: const Icon(Icons.campaign, color: AppColors.primary, size: 24),
+                        tooltip: 'Broadcast Announcement',
+                        splashRadius: 24,
                       ),
                     ],
                   ),
@@ -697,6 +787,133 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showBroadcastNotificationDialog(BuildContext context) {
+    final titleController = TextEditingController();
+    final messageController = TextEditingController();
+    String selectedType = 'info';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1C1917),
+              title: const Text(
+                'Broadcast Global Announcement',
+                style: TextStyle(
+                  fontFamily: 'Cormorant Garamond',
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: messageController,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Message',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    dropdownColor: const Color(0xFF1C1917),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Type',
+                      labelStyle: TextStyle(color: Colors.white70),
+                    ),
+                    items: const ['info', 'payment', 'alert', 'promo', 'system']
+                        .map((type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          selectedType = val;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  onPressed: () async {
+                    if (titleController.text.isEmpty || messageController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please fill all fields')),
+                      );
+                      return;
+                    }
+                    try {
+                      final db = ref.read(databaseServiceProvider);
+                      await db.createNotification(
+                        userId: null,
+                        title: titleController.text.trim(),
+                        message: messageController.text.trim(),
+                        type: selectedType,
+                        isGlobal: true,
+                      );
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Broadcast sent successfully!')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('BROADCAST', style: TextStyle(color: Colors.black)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

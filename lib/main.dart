@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:convex_flutter/convex_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'core/constants/convex_env.dart';
 import 'core/convex_launch_state.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'core/services/notification_service.dart';
 import 'data/datasources/convex_api.dart';
 
 void main() async {
@@ -41,7 +43,21 @@ void main() async {
     );
   }
 
-  runApp(const ProviderScope(child: SlgGoldsApp()));
+  // Initialize notifications service
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('NotificationService initialization failed: $e');
+  }
+
+  // Initialize Sentry error tracking
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = 'https://exampleKey@o0.ingest.sentry.io/0'; // Placeholder DSN
+      options.tracesSampleRate = 1.0;
+    },
+    appRunner: () => runApp(const ProviderScope(child: SlgGoldsApp())),
+  );
 }
 
 class SlgGoldsApp extends StatelessWidget {

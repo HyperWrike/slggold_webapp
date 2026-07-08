@@ -1,7 +1,7 @@
 class GstCalculator {
   static const double currentGoldGstRate = 0.03; // 3%
   static const double currentSilverGstRate = 0.03; // 3%
-  static const double makingChargesGstRate = 0.05; // 5% depending on rules, sometimes 18%
+  static const double makingChargesGstRate = 0.18; // 18%
 
   static double calculateGst(double baseAmount, double rate) {
     return baseAmount * rate;

@@ -565,11 +565,12 @@ class _AdminCustomerListScreenState
                     ),
                     Row(
                       children: [
-                        _buildActionButton(Icons.call, AppColors.primaryFixed),
+                        _buildActionButton(Icons.call, AppColors.primaryFixed, onTap: () {}),
                         const SizedBox(width: 8),
                         _buildActionButton(
-                          Icons.share,
+                          Icons.send_rounded,
                           const Color(0xFFF1F5F9),
+                          onTap: () => _showSendNotificationDialog(context, customer),
                         ),
                       ],
                     ),
@@ -895,15 +896,18 @@ class _AdminCustomerListScreenState
     );
   }
 
-  Widget _buildActionButton(IconData icon, Color bgColor) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildActionButton(IconData icon, Color bgColor, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      child: Icon(icon, color: AppColors.primary, size: 20),
     );
   }
 
@@ -1008,5 +1012,132 @@ class _AdminCustomerListScreenState
       // ignore: avoid_print
       print('Error loading customer details: $e');
     }
+  }
+
+  void _showSendNotificationDialog(BuildContext context, Map<String, dynamic> customer) {
+    final titleController = TextEditingController();
+    final messageController = TextEditingController();
+    String selectedType = 'info';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1C1917),
+              title: Text(
+                'Send Notification to ${customer['full_name'] ?? customer['username']}',
+                style: const TextStyle(
+                  fontFamily: 'Cormorant Garamond',
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: messageController,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Message',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    dropdownColor: const Color(0xFF1C1917),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Type',
+                      labelStyle: TextStyle(color: Colors.white70),
+                    ),
+                    items: const ['info', 'payment', 'alert', 'promo', 'system']
+                        .map((type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          selectedType = val;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  onPressed: () async {
+                    if (titleController.text.isEmpty || messageController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please fill all fields')),
+                      );
+                      return;
+                    }
+                    try {
+                      final db = ref.read(databaseServiceProvider);
+                      await db.createNotification(
+                        userId: customer['id']?.toString(),
+                        title: titleController.text.trim(),
+                        message: messageController.text.trim(),
+                        type: selectedType,
+                        isGlobal: false,
+                      );
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Notification sent successfully!')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('SEND', style: TextStyle(color: Colors.black)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

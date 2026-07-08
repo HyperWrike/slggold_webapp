@@ -61,13 +61,15 @@ export const completeTransaction = internalMutation({
     let goldPrice = latestPrice?.gold_price ?? 7850;
     if (goldPrice <= 0) goldPrice = 7850;
 
+    const scheme = enr.scheme_id ? await ctx.db.get(enr.scheme_id) : null;
+    const metalType = scheme?.metal_type ?? "gold";
+
     // Retrieve latest GST rates
     const latestGst = await ctx.db.query("gst_rates").order("desc").first();
     const goldGstRate = latestGst?.gold_gst ?? 3;
-    const gstMultiplier = 1 + goldGstRate / 100;
-
-    const scheme = enr.scheme_id ? await ctx.db.get(enr.scheme_id) : null;
-    const metalType = scheme?.metal_type ?? "gold";
+    const silverGstRate = latestGst?.silver_gst ?? 3;
+    const gstRate = metalType === "silver" ? silverGstRate : goldGstRate;
+    const gstMultiplier = 1 + gstRate / 100;
 
     // Calculate GST
     const netAmount = txn.amount / gstMultiplier;

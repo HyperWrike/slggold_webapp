@@ -36,6 +36,7 @@ class _MockAuthRepository implements AuthRepository {
   Future<Either<Failure, UserEntity>> register({
     required String fullName,
     required String username,
+    required String email,
     required String password,
     required String phone,
     required String aadhaar,
@@ -208,6 +209,7 @@ void main() {
       final result = await notifier.register(
         fullName: 'Test User',
         username: 'testuser',
+        email: 'test@example.com',
         password: 'pass123',
         phone: '9876543210',
         aadhaar: '123456789012',
@@ -238,6 +240,7 @@ void main() {
       final result = await notifier.register(
         fullName: 'Test User',
         username: 'taken_user',
+        email: 'test@example.com',
         password: 'pass123',
         phone: '9876543210',
         aadhaar: '123456789012',

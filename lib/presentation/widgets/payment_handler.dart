@@ -168,6 +168,24 @@ class _MockPaymentSimulator extends StatefulWidget {
 class _MockPaymentSimulatorState extends State<_MockPaymentSimulator> {
   bool _isProcessing = false;
   String? _statusText;
+  double _goldGstRate = 3.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGst();
+  }
+
+  Future<void> _loadGst() async {
+    try {
+      final rates = await widget.db.getLatestGstRates();
+      if (rates != null && mounted) {
+        setState(() {
+          _goldGstRate = (rates['gold_gst'] as num?)?.toDouble() ?? 3.0;
+        });
+      }
+    } catch (_) {}
+  }
 
   Future<void> _simulateSuccess() async {
     setState(() {
@@ -224,7 +242,7 @@ class _MockPaymentSimulatorState extends State<_MockPaymentSimulator> {
   @override
   Widget build(BuildContext context) {
     final formatCurrency = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
-    final netAmount = widget.amount / 1.03;
+    final netAmount = widget.amount / (1 + _goldGstRate / 100);
     final gstAmount = widget.amount - netAmount;
 
     return BackdropFilter(
@@ -478,7 +496,7 @@ class _MockPaymentSimulatorState extends State<_MockPaymentSimulator> {
                       children: [
                         _buildRow('Base Installment', formatCurrency.format(netAmount)),
                         const SizedBox(height: 10),
-                        _buildRow('GST (3%)', formatCurrency.format(gstAmount)),
+                        _buildRow('GST (${_goldGstRate.toStringAsFixed(1)}%)', formatCurrency.format(gstAmount)),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 10),
                           child: Divider(color: Colors.white12, height: 1),

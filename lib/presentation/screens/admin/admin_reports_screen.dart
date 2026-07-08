@@ -270,7 +270,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                     Expanded(
                                       flex: 1,
                                       child: _buildGstBreakdown(
-                                        totalCollections,
+                                        totalGst,
                                         formatCurrency,
                                       ),
                                     ),
@@ -282,7 +282,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                   _buildCollectionTrends(formatCurrency),
                                   const SizedBox(height: 16),
                                   _buildGstBreakdown(
-                                    totalCollections,
+                                    totalGst,
                                     formatCurrency,
                                   ),
                                 ],
@@ -598,12 +598,12 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
   }
 
   Widget _buildGstBreakdown(
-    double totalCollections,
+    double totalGst,
     NumberFormat formatCurrency,
   ) {
-    final cgst = totalCollections * 0.015;
-    final sgst = totalCollections * 0.015;
-    final igst = totalCollections * 0.03;
+    final cgst = totalGst / 2;
+    final sgst = totalGst / 2;
+    final igst = 0.0;
     final totalLiability = cgst + sgst;
 
     return Container(
@@ -624,9 +624,9 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildGstRow('CGST (1.5%)', 'Intra-state Tax', cgst, formatCurrency),
-          _buildGstRow('SGST (1.5%)', 'State Levy', sgst, formatCurrency),
-          _buildGstRow('IGST (3.0%)', 'Inter-state Tax', 0, formatCurrency),
+          _buildGstRow('CGST (Central GST)', 'Intra-state Tax', cgst, formatCurrency),
+          _buildGstRow('SGST (State GST)', 'State Levy', sgst, formatCurrency),
+          _buildGstRow('IGST (Integrated GST)', 'Inter-state Tax', 0, formatCurrency),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),

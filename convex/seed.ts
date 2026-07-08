@@ -130,3 +130,17 @@ export const defaultData = mutation({
     return { ok: true };
   },
 });
+
+export const seedGstProd = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.db.insert("gst_rates", {
+      gold_gst: 3,
+      silver_gst: 3,
+      making_charges_gst: 18,
+      created_at: new Date().toISOString(),
+    });
+    return { ok: true };
+  },
+});
+
