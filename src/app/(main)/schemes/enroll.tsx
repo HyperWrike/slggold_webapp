@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Alert, SafeAreaView, Platform } from 'react-native';
 import { useQuery, useMutation, useAction } from 'convex/react';
+import { openRazorpayCheckout } from '../../../services/razorpay';
 import { useAuth } from '../../../context/AuthContext';
 import { api } from '../../../../convex/_generated/api';
 import { AppColors } from '../../../constants/colors';
@@ -70,7 +71,34 @@ export default function EnrollSchemeScreen() {
 
       setOrderData(order);
       setIsLoading(false);
-      setPaymentModalVisible(true);
+
+      if (!order.isMock && Platform.OS === 'web') {
+        openRazorpayCheckout(order as any, async (paymentId, signature) => {
+          setIsLoading(true);
+          try {
+            await verifyPayment({
+              sessionToken,
+              razorpayOrderId: order.orderId,
+              razorpayPaymentId: paymentId,
+              razorpaySignature: signature,
+            });
+            setPaymentSuccess(true);
+            setPaymentModalVisible(true);
+            setTimeout(() => {
+              setPaymentModalVisible(false);
+              router.replace('/(main)/portfolio');
+            }, 2000);
+          } catch (err) {
+            Alert.alert('Verification Error', err instanceof Error ? err.message : 'Signature verification failed');
+          } finally {
+            setIsLoading(false);
+          }
+        }, (err) => {
+          Alert.alert('Payment Failed/Cancelled', err);
+        });
+      } else {
+        setPaymentModalVisible(true);
+      }
 
     } catch (e) {
       setIsLoading(false);

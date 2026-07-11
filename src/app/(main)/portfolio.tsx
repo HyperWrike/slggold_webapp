@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert, SafeAreaView, Platform } from 'react-native';
 import { useQuery, useAction } from 'convex/react';
+import { openRazorpayCheckout } from '../../services/razorpay';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../../convex/_generated/api';
 import { AppColors } from '../../constants/colors';
@@ -25,6 +26,7 @@ export default function PortfolioScreen() {
   const [payingEnrollment, setPayingEnrollment] = useState<any>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [orderData, setOrderData] = useState<any>(null);
 
   const formatCurrency = (val: number) => {
     return '₹' + new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(val);
@@ -34,31 +36,69 @@ export default function PortfolioScreen() {
     setExpandedCardId(expandedCardId === id ? null : id);
   };
 
-  const initiatePayment = (enrollment: any) => {
+  const initiatePayment = async (enrollment: any) => {
     setPayingEnrollment(enrollment);
     setPaymentSuccess(false);
-    setPaymentModalVisible(true);
-  };
-
-  const handleSimulatePayment = async () => {
-    if (!sessionToken || !payingEnrollment) return;
-    
     setIsPaying(true);
+
     try {
       // 1. Create Order
       const order = await createOrder({
-        sessionToken,
-        enrollmentId: payingEnrollment.id as any,
-        amount: payingEnrollment.monthly_amount,
+        sessionToken: sessionToken || '',
+        enrollmentId: enrollment.id as any,
+        amount: enrollment.monthly_amount,
       });
 
-      // 2. Simulate payment confirmation
+      setOrderData(order);
+      setIsPaying(false);
+
+      if (!order.isMock && Platform.OS === 'web') {
+        openRazorpayCheckout(order as any, async (paymentId, signature) => {
+          setIsPaying(true);
+          try {
+            await verifyPayment({
+              sessionToken: sessionToken || '',
+              razorpayOrderId: order.orderId,
+              razorpayPaymentId: paymentId,
+              razorpaySignature: signature,
+            });
+            setPaymentSuccess(true);
+            setPaymentModalVisible(true);
+            setTimeout(() => {
+              setPaymentModalVisible(false);
+              setPayingEnrollment(null);
+              setPaymentSuccess(false);
+              setOrderData(null);
+            }, 2000);
+          } catch (err) {
+            Alert.alert('Verification Error', err instanceof Error ? err.message : 'Signature verification failed');
+          } finally {
+            setIsPaying(false);
+          }
+        }, (err) => {
+          setIsPaying(false);
+          Alert.alert('Payment Failed/Cancelled', err);
+        });
+      } else {
+        setPaymentModalVisible(true);
+      }
+    } catch (e) {
+      setIsPaying(false);
+      Alert.alert('Payment Error', e instanceof Error ? e.message : 'Could not create payment order');
+    }
+  };
+
+  const handleSimulatePayment = async () => {
+    if (!sessionToken || !orderData || !payingEnrollment) return;
+    
+    setIsPaying(true);
+    try {
       const mockPayId = 'pay_mock_' + Math.random().toString(36).substring(2, 10);
       const mockSig = 'sig_mock_' + Math.random().toString(36).substring(2, 10);
 
       await verifyPayment({
         sessionToken,
-        razorpayOrderId: order.orderId,
+        razorpayOrderId: orderData.orderId,
         razorpayPaymentId: mockPayId,
         razorpaySignature: mockSig,
       });
@@ -71,6 +111,7 @@ export default function PortfolioScreen() {
         setPaymentModalVisible(false);
         setPayingEnrollment(null);
         setPaymentSuccess(false);
+        setOrderData(null);
       }, 2000);
 
     } catch (e) {
@@ -212,12 +253,19 @@ export default function PortfolioScreen() {
 
                         {enr.status === 'active' && enr.paid_months < enr.tenure_months && (
                           <TouchableOpacity 
-                            style={styles.payButton} 
+                            style={[styles.payButton, isPaying && payingEnrollment?.id === enr.id && { opacity: 0.6 }]} 
                             activeOpacity={0.9}
-                            onPress={() => initiatePayment(enr)}
+                            onPress={() => !isPaying && initiatePayment(enr)}
+                            disabled={isPaying}
                           >
-                            <Ionicons name="card-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={styles.payButtonText}>PAY INSTALLMENT</Text>
+                            {isPaying && payingEnrollment?.id === enr.id ? (
+                              <ActivityIndicator color="#FFFFFF" size="small" />
+                            ) : (
+                              <>
+                                <Ionicons name="card-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                <Text style={styles.payButtonText}>PAY INSTALLMENT</Text>
+                              </>
+                            )}
                           </TouchableOpacity>
                         )}
                       </View>
