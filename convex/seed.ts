@@ -127,6 +127,15 @@ export const defaultData = mutation({
       });
     }
 
+    const prices = await ctx.db.query("metal_prices").collect();
+    if (prices.length === 0) {
+      await ctx.db.insert("metal_prices", {
+        gold_price: 7850,
+        silver_price: 95,
+        created_at: new Date().toISOString(),
+      });
+    }
+
     return { ok: true };
   },
 });

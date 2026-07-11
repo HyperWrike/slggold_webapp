@@ -13,7 +13,15 @@ export const latest = query({
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
-    return docWithId(rows[0] as Record<string, unknown> & { _id: unknown });
+    const row = rows[0];
+    return {
+      id: String(row._id),
+      created_at: row.created_at,
+      gold_price: row.gold_price,
+      silver_price: row.silver_price,
+      goldPricePerGram: row.gold_price,
+      silverPricePerGram: row.silver_price,
+    };
   },
 });
 
