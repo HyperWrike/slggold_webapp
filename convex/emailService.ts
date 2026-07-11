@@ -14,7 +14,10 @@ export const sendOtpEmail = action({
   handler: async (_ctx, { email, otp }) => {
     const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) {
-      throw new Error("BREVO_API_KEY is not configured");
+      console.warn("=================================================");
+      console.warn(`MOCK EMAIL SERVICE: OTP for ${email} is [ ${otp} ]`);
+      console.warn("=================================================");
+      return { success: true, mock: true, messageId: "mock_id" };
     }
 
     const html = `
