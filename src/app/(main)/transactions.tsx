@@ -123,7 +123,7 @@ export default function TransactionsScreen() {
                     const hasDetails = txn.net_amount !== undefined || txn.gst !== undefined || txn.gold_grams !== undefined || txn.silver_grams !== undefined;
                     
                     return (
-                      <View key={txn._id} style={styles.txnCard}>
+                      <View key={txn.id} style={styles.txnCard}>
                         <View style={styles.txnTopRow}>
                           <View style={[styles.iconBox, { backgroundColor: isCredit ? 'rgba(22, 163, 74, 0.1)' : 'rgba(79, 70, 52, 0.1)' }]}>
                             <Ionicons 

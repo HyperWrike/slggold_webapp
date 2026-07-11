@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshView, RefreshControl, Dimensions, Modal, ActivityIndicator, SafeAreaView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions, Modal, ActivityIndicator, SafeAreaView, Platform } from 'react-native';
 import { useQuery, useMutation } from 'convex/react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../../convex/_generated/api';
@@ -20,10 +20,10 @@ export default function HomeScreen() {
   const metalPrices = useQuery(api.metalPrices.latest);
   const portfolio = useQuery(api.portfolio.summary, sessionToken ? { sessionToken } : 'skip');
   const enrollments = useQuery(api.enrollments.listForUserWithSchemes, sessionToken ? { sessionToken } : 'skip');
-  const transactions = useQuery(api.transactions.listForUser, sessionToken ? { sessionToken } : 'skip');
-  const schemes = useQuery(api.schemes.listActive);
+  const transactions = useQuery(api.transactions.listForUser, sessionToken ? { sessionToken } : 'skip') as any;
+  const schemes = useQuery(api.schemes.listActive) as any;
   const unreadNotifs = useQuery(api.notifications.listUnread, sessionToken ? { sessionToken } : 'skip');
-  const allNotifs = useQuery(api.notifications.listForUser, sessionToken ? { sessionToken } : 'skip');
+  const allNotifs = useQuery(api.notifications.listForUser, sessionToken ? { sessionToken } : 'skip') as any;
 
   // Mutations
   const markAllRead = useMutation(api.notifications.markAllRead);
@@ -211,9 +211,9 @@ export default function HomeScreen() {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.schemesRow}>
           {schemes && schemes.length > 0 ? (
-            schemes.slice(0, 3).map((scheme, idx) => (
+            schemes.slice(0, 3).map((scheme: any, idx: number) => (
               <TouchableOpacity
-                key={scheme._id}
+                key={scheme.id}
                 style={[styles.schemeCard, { borderLeftColor: scheme.metal_type === 'gold' ? AppColors.goldDark : '#A8A29E' }]}
                 activeOpacity={0.8}
                 onPress={() => router.push('/(main)/schemes')}
@@ -245,10 +245,10 @@ export default function HomeScreen() {
 
         <View style={styles.activityContainer}>
           {transactions && transactions.length > 0 ? (
-            transactions.slice(0, 3).map((txn) => {
+            transactions.slice(0, 3).map((txn: any) => {
               const isCredit = txn.type === 'credit';
               return (
-                <View key={txn._id} style={styles.txnItem}>
+                <View key={txn.id} style={styles.txnItem}>
                   <View style={[styles.txnIconContainer, { backgroundColor: isCredit ? 'rgba(22, 163, 74, 0.1)' : 'rgba(186, 26, 26, 0.1)' }]}>
                     <Ionicons 
                       name={isCredit ? "arrow-down" : "arrow-up"} 
@@ -299,8 +299,8 @@ export default function HomeScreen() {
 
             <ScrollView contentContainerStyle={styles.notifScrollContent}>
               {allNotifs && allNotifs.length > 0 ? (
-                allNotifs.map((notif) => (
-                  <View key={notif._id} style={[styles.notifItem, !notif.is_read && styles.notifUnreadItem]}>
+                allNotifs.map((notif: any) => (
+                  <View key={notif.id} style={[styles.notifItem, !notif.is_read && styles.notifUnreadItem]}>
                     <View style={styles.notifHeaderRow}>
                       <Text style={styles.notifTitle}>{notif.title}</Text>
                       {!notif.is_read && <View style={styles.notifDot} />}

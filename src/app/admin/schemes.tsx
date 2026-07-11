@@ -11,7 +11,7 @@ export default function AdminSchemesScreen() {
   const { sessionToken } = useAuth();
   
   // Queries
-  const schemes = useQuery(api.schemes.listActive);
+  const schemes = useQuery(api.schemes.listActive) as any;
 
   // Mutations
   const createScheme = useMutation(api.schemes.create);
@@ -148,11 +148,11 @@ export default function AdminSchemesScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {schemes ? (
           schemes.length > 0 ? (
-            schemes.map((scheme) => {
+            schemes.map((scheme: any) => {
               const isGold = scheme.metal_type === 'gold';
               const isCombo = scheme.metal_type === 'combo';
               return (
-                <View key={scheme._id} style={styles.schemeCard}>
+                <View key={scheme.id} style={styles.schemeCard}>
                   <View style={[styles.schemeIconBox, { 
                     backgroundColor: isGold 
                       ? 'rgba(245, 200, 66, 0.15)' 
@@ -187,13 +187,13 @@ export default function AdminSchemesScreen() {
                   <View style={styles.actionsColumn}>
                     <Switch
                       value={scheme.is_active}
-                      onValueChange={() => handleToggleActive(scheme._id, scheme.is_active)}
+                      onValueChange={() => handleToggleActive(scheme.id, scheme.is_active)}
                       trackColor={{ true: 'rgba(74, 14, 143, 0.4)', false: '#E5E5EA' }}
                       thumbColor={scheme.is_active ? AppColors.royalPurple : '#FFFFFF'}
                     />
                     <TouchableOpacity 
                       style={styles.deleteButton} 
-                      onPress={() => handleDeleteScheme(scheme._id, scheme.name)}
+                      onPress={() => handleDeleteScheme(scheme.id, scheme.name)}
                     >
                       <Ionicons name="trash-outline" size={20} color="#EF4444" />
                     </TouchableOpacity>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Modal, TextInput, Alert, SafeAreaView } from 'react-native';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useAction } from 'convex/react';
+import * as Crypto from 'expo-crypto';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../../convex/_generated/api';
 import { AppColors } from '../../constants/colors';
@@ -13,11 +14,11 @@ export default function ProfileScreen() {
   const { user, logout, sessionToken, enableBiometric, biometricEnabled, biometricSupported } = useAuth();
 
   // Queries
-  const profileDetails = useQuery(api.auth.getCurrentUser, sessionToken ? { sessionToken } : 'skip');
+  const profileDetails = useQuery(api.auth.getCurrentUser, sessionToken ? { sessionToken } : 'skip') as any;
 
-  // Mutations
+  // Mutations / Actions
   const updatePhone = useMutation(api.users.updatePhone);
-  const changePasswordMutation = useMutation(api.users.changePassword);
+  const changePasswordMutation = useAction(api.authActions.changePassword);
   const changePinMutation = useMutation(api.users.changePin);
 
   // States
@@ -94,7 +95,7 @@ export default function ProfileScreen() {
       if (sessionToken) {
         await changePasswordMutation({
           sessionToken,
-          oldPassword,
+          currentPassword: oldPassword,
           newPassword,
         });
         setPasswordModalVisible(false);
@@ -122,9 +123,14 @@ export default function ProfileScreen() {
     setIsChangingPin(true);
     try {
       if (sessionToken) {
+        const pinHash = await Crypto.digestStringAsync(
+          Crypto.CryptoDigestAlgorithm.SHA256,
+          newPin
+        );
         await changePinMutation({
           sessionToken,
-          newPin,
+          pinHash,
+          pinLength: String(newPin.length),
         });
         setPinModalVisible(false);
         setNewPin('');

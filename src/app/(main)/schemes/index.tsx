@@ -17,7 +17,7 @@ export default function SchemesScreen() {
 
   // Queries
   const availableSchemes = useQuery(api.schemes.listActive);
-  const myEnrollments = useQuery(api.enrollments.listForUserWithSchemes, sessionToken ? { sessionToken } : 'skip');
+  const myEnrollments = useQuery(api.enrollments.listForUserWithSchemes, sessionToken ? { sessionToken } : 'skip') as any;
 
   const formatCurrency = (val: number) => {
     return '₹' + new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(val);
@@ -90,12 +90,12 @@ export default function SchemesScreen() {
 
             {availableSchemes ? (
               filteredSchemes.length > 0 ? (
-                filteredSchemes.map((scheme, index) => {
+                filteredSchemes.map((scheme: any, index: number) => {
                   const isGold = scheme.metal_type === 'gold';
                   const isCombo = scheme.metal_type === 'combo';
                   
                   return (
-                    <View key={scheme._id} style={styles.schemeCard}>
+                    <View key={scheme.id} style={styles.schemeCard}>
                       {/* Card Header Illustration/Gradient Area */}
                       <View style={[styles.cardHeaderArea, { 
                         backgroundColor: isGold 
@@ -142,7 +142,7 @@ export default function SchemesScreen() {
                           style={styles.enrollButton}
                           onPress={() => router.push({
                             pathname: '/(main)/schemes/enroll',
-                            params: { schemeId: scheme._id }
+                            params: { schemeId: scheme.id }
                           })}
                         >
                           <Text style={styles.enrollButtonText}>ENROLL NOW</Text>
@@ -168,13 +168,13 @@ export default function SchemesScreen() {
           <View style={styles.viewContainer}>
             {myEnrollments ? (
               myEnrollments.length > 0 ? (
-                myEnrollments.map((enr) => {
+                myEnrollments.map((enr: any) => {
                   const scheme = enr.schemes;
                   const isGold = scheme?.metal_type !== 'silver';
                   const progressPercent = enr.tenure_months > 0 ? (enr.paid_months / enr.tenure_months) : 0;
                   
                   return (
-                    <View key={enr._id} style={styles.enrCard}>
+                    <View key={enr.id} style={styles.enrCard}>
                       <View style={styles.enrHeader}>
                         <View style={[styles.enrIconBox, { backgroundColor: isGold ? 'rgba(245, 200, 66, 0.15)' : 'rgba(192, 192, 192, 0.2)' }]}>
                           <Ionicons 

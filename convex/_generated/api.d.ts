@@ -34,6 +34,7 @@ import type * as schemes from "../schemes.js";
 import type * as seed from "../seed.js";
 import type * as testEnv from "../testEnv.js";
 import type * as transactions from "../transactions.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   testEnv: typeof testEnv;
   transactions: typeof transactions;
+  users: typeof users;
 }>;
 
 /**

@@ -12,10 +12,10 @@ export default function AdminReportsScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
 
   // Queries
-  const allTxns = useQuery(api.transactions.listAllForAdmin, sessionToken ? { sessionToken } : 'skip');
-  const allCustomers = useQuery(api.admin.listCustomers, sessionToken ? { sessionToken } : 'skip');
-  const allSchemes = useQuery(api.schemes.listActive);
-  const allEnrollments = useQuery(api.enrollments.listAllForReports, sessionToken ? { sessionToken } : 'skip');
+  const allTxns = useQuery(api.transactions.listAllForAdmin, sessionToken ? { sessionToken } : 'skip') as any;
+  const allCustomers = useQuery(api.admin.listCustomers, sessionToken ? { sessionToken } : 'skip') as any;
+  const allSchemes = useQuery(api.schemes.listActive) as any;
+  const allEnrollments = useQuery(api.enrollments.listAllForReports, sessionToken ? { sessionToken } : 'skip') as any;
 
   const formatCurrency = (val: number) => {
     return '₹' + new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(val);
@@ -33,7 +33,7 @@ export default function AdminReportsScreen() {
     // Total collections
     let totalRevenue = 0;
     let totalGst = 0;
-    allTxns.forEach((t) => {
+    allTxns.forEach((t: any) => {
       if (t.type === 'credit') {
         totalRevenue += t.amount || 0;
         totalGst += t.gst || 0;
@@ -43,21 +43,21 @@ export default function AdminReportsScreen() {
     // Total gold weight
     let totalGoldWeight = 0;
     let totalSilverWeight = 0;
-    allEnrollments.forEach((e) => {
+    allEnrollments.forEach((e: any) => {
       totalGoldWeight += e.total_gold_grams || 0;
       totalSilverWeight += e.total_silver_grams || 0;
     });
 
     // Scheme performance
-    const schemePerf = allSchemes.map((s) => {
-      const schemeId = s._id;
-      const relatedEnr = allEnrollments.filter((e) => e.scheme_id === schemeId);
+    const schemePerf = allSchemes.map((s: any) => {
+      const schemeId = s.id;
+      const relatedEnr = allEnrollments.filter((e: any) => e.scheme_id === schemeId);
       
-      const activeCount = relatedEnr.filter((e) => e.status === 'active').length;
-      const completedCount = relatedEnr.filter((e) => e.status === 'completed').length;
-      const revenue = relatedEnr.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
+      const activeCount = relatedEnr.filter((e: any) => e.status === 'active').length;
+      const completedCount = relatedEnr.filter((e: any) => e.status === 'completed').length;
+      const revenue = relatedEnr.reduce((acc: number, curr: any) => acc + (curr.paid_amount || 0), 0);
       const avgTenure = relatedEnr.length > 0 
-        ? relatedEnr.reduce((acc, curr) => acc + (curr.paid_months || 0), 0) / relatedEnr.length
+        ? relatedEnr.reduce((acc: number, curr: any) => acc + (curr.paid_months || 0), 0) / relatedEnr.length
         : 0;
 
       return {
@@ -190,7 +190,7 @@ export default function AdminReportsScreen() {
             <Text style={styles.tableCellHeader}>REVENUE</Text>
           </View>
 
-          {data.schemePerf.map((perf, idx) => (
+          {data.schemePerf.map((perf: any, idx: number) => (
             <View key={idx} style={styles.tableRow}>
               <View style={{ flex: 2 }}>
                 <Text style={styles.tableCellTitle} numberOfLines={1}>{perf.name}</Text>

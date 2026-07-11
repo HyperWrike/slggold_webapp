@@ -12,7 +12,7 @@ export default function PortfolioScreen() {
   
   // Queries
   const portfolio = useQuery(api.portfolio.summary, sessionToken ? { sessionToken } : 'skip');
-  const enrollments = useQuery(api.enrollments.listForUserWithSchemes, sessionToken ? { sessionToken } : 'skip');
+  const enrollments = useQuery(api.enrollments.listForUserWithSchemes, sessionToken ? { sessionToken } : 'skip') as any;
   const metalPrices = useQuery(api.metalPrices.latest);
 
   // Actions
@@ -48,7 +48,7 @@ export default function PortfolioScreen() {
       // 1. Create Order
       const order = await createOrder({
         sessionToken,
-        enrollmentId: payingEnrollment._id,
+        enrollmentId: payingEnrollment.id as any,
         amount: payingEnrollment.monthly_amount,
       });
 
@@ -129,18 +129,18 @@ export default function PortfolioScreen() {
         <View style={styles.schemesContainer}>
           {enrollments ? (
             enrollments.length > 0 ? (
-              enrollments.map((enr) => {
+              enrollments.map((enr: any) => {
                 const scheme = enr.schemes;
                 const isGold = scheme?.metal_type !== 'silver';
-                const isExpanded = expandedCardId === enr._id;
+                const isExpanded = expandedCardId === enr.id;
                 const progressPercent = enr.tenure_months > 0 ? (enr.paid_months / enr.tenure_months) : 0;
                 
                 return (
-                  <View key={enr._id} style={styles.enrCard}>
+                  <View key={enr.id} style={styles.enrCard}>
                     <TouchableOpacity 
                       style={styles.cardHeader} 
                       activeOpacity={0.8}
-                      onPress={() => toggleExpand(enr._id)}
+                      onPress={() => toggleExpand(enr.id)}
                     >
                       <View style={[styles.enrIconBox, { backgroundColor: isGold ? 'rgba(245, 200, 66, 0.15)' : 'rgba(192, 192, 192, 0.2)' }]}>
                         <Ionicons 

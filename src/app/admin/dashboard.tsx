@@ -15,7 +15,7 @@ export default function AdminDashboardScreen() {
 
   // Queries
   const stats = useQuery(api.admin.stats, sessionToken ? { sessionToken } : 'skip');
-  const recentTransactions = useQuery(api.transactions.listAllForAdmin, sessionToken ? { sessionToken, limit: 10 } : 'skip');
+  const recentTransactions = useQuery(api.transactions.listAllForAdmin, sessionToken ? { sessionToken, limit: 10 } : 'skip') as any;
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -115,10 +115,10 @@ export default function AdminDashboardScreen() {
         <View style={styles.txnContainer}>
           {recentTransactions ? (
             recentTransactions.length > 0 ? (
-              recentTransactions.map((txn) => {
+              recentTransactions.map((txn: any) => {
                 const isCredit = txn.type === 'credit';
                 return (
-                  <View key={txn._id} style={styles.txnCard}>
+                  <View key={txn.id} style={styles.txnCard}>
                     <View style={[styles.txnIconBox, { backgroundColor: isCredit ? 'rgba(22, 163, 74, 0.1)' : 'rgba(239, 68, 68, 0.1)' }]}>
                       <Ionicons 
                         name={isCredit ? "arrow-down" : "arrow-up"} 

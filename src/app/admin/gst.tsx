@@ -11,7 +11,7 @@ export default function AdminGstScreen() {
   const { sessionToken } = useAuth();
 
   // Queries
-  const gstDetails = useQuery(api.gst.latest, sessionToken ? { sessionToken } : 'skip');
+  const gstDetails = useQuery(api.gst.latest, sessionToken ? { sessionToken } : 'skip') as any;
 
   // Mutations
   const saveGst = useMutation(api.gst.save);

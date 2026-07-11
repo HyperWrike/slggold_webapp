@@ -87,3 +87,14 @@ export const remove = mutation({
     return { ok: true };
   },
 });
+
+export const get = query({
+  args: {
+    id: v.id("schemes"),
+  },
+  handler: async (ctx, args) => {
+    const scheme = await ctx.db.get(args.id);
+    if (!scheme) return null;
+    return docWithId(scheme as Record<string, unknown> & { _id: unknown });
+  },
+});

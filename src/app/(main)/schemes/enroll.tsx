@@ -14,7 +14,7 @@ export default function EnrollSchemeScreen() {
   const { sessionToken } = useAuth();
 
   // Queries
-  const scheme = useQuery(api.schemes.get, schemeId ? { id: schemeId as any } : 'skip');
+  const scheme = useQuery(api.schemes.get, schemeId ? { id: schemeId as any } : 'skip') as any;
 
   // Mutations/Actions
   const createEnrollment = useMutation(api.enrollments.create);
@@ -49,7 +49,7 @@ export default function EnrollSchemeScreen() {
       // 1. Create the enrollment
       const res = await createEnrollment({
         sessionToken,
-        schemeId: scheme._id,
+        schemeId: scheme.id as any,
         monthlyAmount,
         tenureMonths: tenure,
       });
