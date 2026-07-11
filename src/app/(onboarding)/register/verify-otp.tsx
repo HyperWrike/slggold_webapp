@@ -42,13 +42,15 @@ export default function VerifyOtpScreen() {
   }, []);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     if (otpSent && resendSeconds > 0) {
       timer = setTimeout(() => {
         setResendSeconds((prev) => prev - 1);
       }, 1000);
     }
-    return () => clearTimeout(timer);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [otpSent, resendSeconds]);
 
   const sendOtp = async () => {
