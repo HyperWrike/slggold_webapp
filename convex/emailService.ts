@@ -3,8 +3,8 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 
-const BREVO_SENDER_NAME = "SLG Golds";
-const BREVO_SENDER_EMAIL = "otp@hyperwrike.com";
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "SLG Golds";
+const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "kaliyugiheart@gmail.com";
 
 export const sendOtpEmail = action({
   args: {
