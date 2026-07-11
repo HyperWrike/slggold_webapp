@@ -1,6 +1,8 @@
 /**
  * Dynamically loads and runs Razorpay Checkout SDK on web
  */
+import { Platform } from "react-native";
+
 export function openRazorpayCheckout(
   orderData: {
     key: string;
@@ -11,8 +13,12 @@ export function openRazorpayCheckout(
   onSuccess: (paymentId: string, signature: string) => void,
   onFailure: (error: string) => void
 ): void {
-  if (typeof window === "undefined") {
-    onFailure("Window is undefined");
+  if (Platform.OS !== "web") {
+    onFailure("Razorpay checkout is only supported on Web in this implementation.");
+    return;
+  }
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    onFailure("Window or Document is undefined");
     return;
   }
 

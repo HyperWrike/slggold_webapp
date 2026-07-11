@@ -13,7 +13,7 @@ const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
 
 async function checkRateLimit(
-  ctx: Parameters<typeof action>[0],
+  ctx: any,
   email: string,
   actionName: string,
 ): Promise<void> {

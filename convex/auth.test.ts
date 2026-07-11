@@ -36,17 +36,17 @@ describe("authActions", () => {
       pin_length: "4",
     });
 
-    expect(regResult.token).toBeDefined();
-    expect(regResult.profile.email).toBe("test@example.com");
-    expect(regResult.profile.is_verified).toBe(true);
+    expect((regResult as any).token).toBeDefined();
+    expect((regResult as any).profile.email).toBe("test@example.com");
+    expect((regResult as any).profile.is_verified).toBe(true);
 
     // 3. Login with correct credentials - should succeed since registration sets is_verified=true
     const loginResult = await t.action(api.authActions.login, {
       email: "test@example.com",
       password: "password123",
     });
-    expect(loginResult.token).toBeDefined();
-    expect(loginResult.profile.email).toBe("test@example.com");
+    expect((loginResult as any).token).toBeDefined();
+    expect((loginResult as any).profile.email).toBe("test@example.com");
 
     // 4. Manually update profile to is_verified=false to test the guard
     const profile = await t.run(async (ctx) => {
